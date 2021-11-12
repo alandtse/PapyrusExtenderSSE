@@ -1,9 +1,10 @@
 # PapyrusExtenderSSE
 
-SKSE64 plugin that expands Papyrus script functionality, with 276 functions, 29 events, 4 script objects for Skyrim Special Edition. 
+[SKSE64 plugin](https://www.nexusmods.com/skyrimspecialedition/mods/22854) that expands Papyrus script functionality, with 276 functions, 29 events, 4 script objects for Skyrim Special Edition.
 
 Documentation for each function is listed within the Papyrus source files (.psc extension).
 
+[SKSEVR version](https://www.nexusmods.com/skyrimspecialedition/mods/58296)
 ## Requirements
 * [CMake](https://cmake.org/)
 	* Add this to your `PATH`
@@ -15,19 +16,31 @@ Documentation for each function is listed within the Papyrus source files (.psc 
 * [CommonLibSSE](https://github.com/powerof3/CommonLibSSE/tree/dev)
 	* You need to build from the powerof3/dev branch
 	* Add this as as an environment variable `CommonLibSSEPath`
+* [CommonLibVR](https://github.com/alandtse/CommonLibVR/tree/vr)
+	* Add this as as an environment variable `CommonLibVRPath`
 
+## User Requirements
+* [Address Library for SKSE](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
+	* Needed for SSE
+* [VR Address Library for SKSEVR](https://www.nexusmods.com/skyrimspecialedition/mods/58101)
+	* Needed for VR
 ## Register Visual Studio as a Generator
 * Open `x64 Native Tools Command Prompt`
 * Run `cmake`
 * Close the cmd window
 
-## Building
+### SSE
 ```
-git clone https://github.com/powerof3/PapyrusExtenderSSE.git
-cd PapyrusExtenderSSE
 cmake -B build -S .
 ```
 Open build/po3_PapyrusExtender.sln in Visual Studio to build dll.
+
+### VR
+```
+cmake -B build2 -S . -DBUILD_SKYRIMVR=On
+```
+Open build2/po3_PapyrusExtender.sln in Visual Studio to build dll.
+
 
 ## License
 [MIT](LICENSE)
