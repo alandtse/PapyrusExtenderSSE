@@ -270,7 +270,14 @@ namespace Events
 
 			void Install()
 			{
-				stl::write_vfunc<RE::Character, 0x0AB, Resurrect>();
+				stl::write_vfunc<RE::Character,
+#ifndef SKYRIMVR
+					0x0AB
+#else
+					0x0AD
+#endif
+					,
+					Resurrect>();
 			}
 		}
 
