@@ -286,7 +286,7 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Actor is None", a_stackID);
 			return result;
 		}
-
+#ifndef SKYRIMVR
 		const auto activeEffects = a_actor->GetActiveEffectList();
 		if (!activeEffects) {
 			a_vm->TraceForm(a_actor, "has no active effects", a_stackID, Severity::kInfo);
@@ -301,6 +301,17 @@ namespace Papyrus::Actor
 				result.push_back(mgef);
 			}
 		}
+#else
+		a_actor->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
+			if (auto mgef = activeEffect ? activeEffect->GetBaseObject() : nullptr; mgef) {
+				if (!a_inactive && (activeEffect->flags.all(AE::kInactive) || activeEffect->flags.all(AE::kDispelled))) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				result.push_back(mgef);
+			}
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+#endif
 
 		return result;
 	}
@@ -614,14 +625,24 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Spell is None", a_stackID);
 			return false;
 		}
-
+#ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				return ae && ae->spell == a_spell && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
 			});
 		}
-
 		return false;
+#else
+		std::vector<RE::ActiveEffect*>* activeEffects;
+		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
+			activeEffects->push_back(ae);
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+		return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
+			return ae && ae->spell == a_spell && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
+		});
+
+#endif
 	}
 
 	inline bool HasDeferredKill(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, const RE::Actor* a_actor)
@@ -649,14 +670,25 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Archetype is None", a_stackID);
 			return false;
 		}
-
+#ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				const auto mgef = ae ? ae->GetBaseObject() : nullptr;
 				return mgef && MAGIC::get_archetype_as_string(mgef->GetArchetype()) == a_archetype;
 			});
 		}
+#else
+		std::vector<RE::ActiveEffect*>* activeEffects;
+		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
+			activeEffects->push_back(ae);
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+		return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
+			const auto mgef = ae ? ae->GetBaseObject() : nullptr;
+			return mgef && MAGIC::get_archetype_as_string(mgef->GetArchetype()) == a_archetype;
+		});
 
+#endif
 		return false;
 	}
 
@@ -835,7 +867,7 @@ namespace Papyrus::Actor
 			spells.push_back(spell);
 		}
 
-		//Papyrus RemoveSpell queues a task, while console command calls this directly. 
+		//Papyrus RemoveSpell queues a task, while console command calls this directly.
 		auto taskQueue = RE::TaskQueueInterface::GetSingleton();
 		if (taskQueue) {
 			auto actorHandle = a_actor->CreateRefHandle();
@@ -873,7 +905,7 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Spell is None", a_stackID);
 			return false;
 		}
-
+#ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
 			for (const auto& activeEffect : *activeEffects) {
 				if (activeEffect && activeEffect->spell == a_spell) {
@@ -881,7 +913,14 @@ namespace Papyrus::Actor
 				}
 			}
 		}
-
+#else
+		a_actor->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
+			if (activeEffect && activeEffect->spell == a_spell) {
+				activeEffect->Dispel(true);
+			}
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+#endif
 		const auto actorbase = a_actor->GetActorBase();
 		const auto actorEffects = actorbase ? actorbase->actorEffects : nullptr;
 
