@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 set(NAME "po3_PapyrusExtender")
-set(VERSION 4.5.2)
+set(VERSION 4.5.5)
 
 # ---- Options ----
 

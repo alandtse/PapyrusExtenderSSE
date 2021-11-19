@@ -88,7 +88,7 @@ namespace Papyrus::Actor
 		bool a_autoCalc,
 		float a_opacity)
 	{
-		using BLEND_MODE = COLOR::BLEND_MODE;
+		using BLEND_MODE = RE::ColorUtil::BLEND_MODE;
 
 		if (!a_actor) {
 			a_vm->TraceStack("Actor is None", a_stackID);
@@ -107,8 +107,8 @@ namespace Papyrus::Actor
 
 		const auto actorbase = a_actor->GetActorBase();
 		if (actorbase) {
-			const float opacity = a_autoCalc ? std::clamp(a_opacity * COLOR::CalcLuminance(actorbase->bodyTintColor), 0.0f, 1.0f) : a_opacity;
-			auto newColor = COLOR::Blend(actorbase->bodyTintColor, a_color->color, static_cast<BLEND_MODE>(a_blendMode), opacity);
+			const float opacity = a_autoCalc ? std::clamp(a_opacity * RE::ColorUtil::CalcLuminance(actorbase->bodyTintColor), 0.0f, 1.0f) : a_opacity;
+			auto newColor = RE::ColorUtil::Blend(actorbase->bodyTintColor, a_color->color, static_cast<BLEND_MODE>(a_blendMode), opacity);
 
 			auto task = SKSE::GetTaskInterface();
 			task->AddTask([a_actor, newColor, root]() {
@@ -714,6 +714,28 @@ namespace Papyrus::Actor
 		return waterLevel >= 0.875f;
 	}
 
+	inline bool IsDetectedByAnyone(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::Actor* a_actor)
+	{
+		if (!a_actor) {
+			a_vm->TraceStack("Actor is None", a_stackID);
+			return false;
+		}
+
+		if (a_actor->currentProcess) {
+			const auto processLists = RE::ProcessLists::GetSingleton();
+			if (processLists) {
+				for (auto& targetHandle : processLists->highActorHandles) {
+					auto target = targetHandle.get();
+					if (target && target->currentProcess && target->RequestDetectionLevel(a_actor) > 0) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	inline bool IsLimbGone(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
 		RE::Actor* a_actor,
 		std::int32_t a_limbEnum)
@@ -795,8 +817,8 @@ namespace Papyrus::Actor
 			const auto actorbase = a_actor->GetActorBase();
 			const auto root = a_actor->Get3D(false);
 			if (actorbase && root) {
-				const float skinLuminance = a_manual ? a_percent : COLOR::CalcLuminance(actorbase->bodyTintColor);
-				auto newColor = COLOR::Mix(actorbase->bodyTintColor, a_color->color, skinLuminance);
+				const float skinLuminance = a_manual ? a_percent : RE::ColorUtil::CalcLuminance(actorbase->bodyTintColor);
+				auto newColor = RE::ColorUtil::Mix(actorbase->bodyTintColor, a_color->color, skinLuminance);
 
 				auto task = SKSE::GetTaskInterface();
 				task->AddTask([a_actor, newColor, root]() {
@@ -905,32 +927,40 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Spell is None", a_stackID);
 			return false;
 		}
+
+		const auto actorbase = a_actor->GetActorBase();
+		const auto actorEffects = actorbase ? actorbase->GetSpellList() : nullptr;
+
+		if (actorEffects && actorEffects->GetIndex(a_spell)) {
 #ifndef SKYRIMVR
-		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
-			for (const auto& activeEffect : *activeEffects) {
+			const auto activeEffects = a_actor->GetActiveEffectList();
+			if (activeEffects) {
+				for (const auto& activeEffect : *activeEffects) {
+					if (activeEffect && activeEffect->spell == a_spell) {
+						activeEffect->Dispel(true);
+					}
+				}
+			}
+#else
+			a_actor->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
 				if (activeEffect && activeEffect->spell == a_spell) {
 					activeEffect->Dispel(true);
 				}
-			}
-		}
-#else
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
-			if (activeEffect && activeEffect->spell == a_spell) {
-				activeEffect->Dispel(true);
-			}
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
 #endif
-		const auto actorbase = a_actor->GetActorBase();
-		const auto actorEffects = actorbase ? actorbase->actorEffects : nullptr;
 
-		if (actorEffects && actorEffects->GetIndex(a_spell).has_value()) {
-			if (const auto combatController = a_actor->combatController; combatController && combatController->inventoryController) {
+			const auto combatController = a_actor->combatController;
+			if (combatController && combatController->inventoryController) {
 				combatController->inventoryController->unk1C4 = 1;
 			}
-			a_actor->RemoveSelectedSpell(a_spell);
 
-			return actorEffects->RemoveSpell(a_spell);
+			a_actor->RemoveSelectedSpell(a_spell);
+			actorEffects->RemoveSpell(a_spell);
+
+			actorbase->AddChange(RE::TESNPC::ChangeFlags::kSpellList);
+
+			return true;
 		}
 
 		return false;
@@ -1491,8 +1521,9 @@ namespace Papyrus::Actor
 		BIND(IsQuadruped, true);
 		BIND(HasDeferredKill);
 		BIND(HasMagicEffectWithArchetype);
-		BIND(IsActorInWater, true);
-		BIND(IsActorUnderwater, true);
+		BIND(IsActorInWater);
+		BIND(IsActorUnderwater);
+		BIND(IsDetectedByAnyone);
 		BIND(IsLimbGone);
 		BIND(IsSoulTrapped);
 		BIND(KillNoWait);
