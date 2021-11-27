@@ -26,7 +26,7 @@ namespace DETECTION
 	void Register()
 	{
 		REL::Relocation<std::uintptr_t> target{ REL::ID(41659), 0x526 };
-		stl::write_thunk_call<CalculateDetection>(target.address());
+		::stl::write_thunk_call<CalculateDetection>(target.address());
 
 		logger::info("Installing detection hook");
 	}

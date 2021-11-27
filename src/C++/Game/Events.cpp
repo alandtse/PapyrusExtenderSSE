@@ -270,7 +270,7 @@ namespace Events
 
 			void Install()
 			{
-				stl::write_vfunc<RE::Character,
+				::stl::write_vfunc<RE::Character,
 #ifndef SKYRIMVR
 					0x0AB
 #else
@@ -324,7 +324,7 @@ namespace Events
 
 			void Install()
 			{
-				stl::write_vfunc<RE::ReanimateEffect, 0x14, ReanimateStart>();
+				::stl::write_vfunc<RE::ReanimateEffect, 0x14, ReanimateStart>();
 			}
 		};
 
@@ -351,7 +351,7 @@ namespace Events
 
 			void Install()
 			{
-				stl::write_vfunc<RE::ReanimateEffect, 0x15, ReanimateStop>();
+				::stl::write_vfunc<RE::ReanimateEffect, 0x15, ReanimateStop>();
 			}
 		}
 
@@ -380,7 +380,7 @@ namespace Events
 			static void Install()
 			{
 				REL::Relocation<std::uintptr_t> target{ REL::ID(33742), 0x1E8 };
-				stl::write_thunk_call<MagicTargetApply>(target.address());
+				::stl::write_thunk_call<MagicTargetApply>(target.address());
 			}
 		}
 
@@ -406,7 +406,7 @@ namespace Events
 			void Install()
 			{
 				REL::Relocation<std::uintptr_t> target{ REL::ID(37832), 0x1C3 };
-				stl::write_thunk_call<SendHitEvent>(target.address());
+				::stl::write_thunk_call<SendHitEvent>(target.address());
 			}
 		}
 
@@ -428,7 +428,7 @@ namespace Events
 						if (const auto aggressor = a_aggressor.get(); aggressor) {
 							const auto hitTarget = a_target.get();
 							const auto source = RE::TESForm::LookupByID(a_source);
-							const auto flags = stl::to_underlying(a_data.flags);
+							const auto flags = ::stl::to_underlying(a_data.flags);
 
 							OnWeaponHitRegSet::GetSingleton()->QueueEvent(aggressor, hitTarget, source, nullptr, flags);
 						}
@@ -484,11 +484,11 @@ namespace Events
 
 			inline void Install()
 			{
-				stl::write_thunk_call<Actor::SendHitEvent>(Actor::target.address());
+				::stl::write_thunk_call<Actor::SendHitEvent>(Actor::target.address());
 
-				stl::write_thunk_call<Static::SendHitEvent>(Static::target.address());
+				::stl::write_thunk_call<Static::SendHitEvent>(Static::target.address());
 
-				stl::write_thunk_call<Projectile::SendHitEvent>(Projectile::target.address());
+				::stl::write_thunk_call<Projectile::SendHitEvent>(Projectile::target.address());
 			}
 		}
 

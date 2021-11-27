@@ -16,7 +16,7 @@ namespace Serialization
 
 		std::string sig;
 		sig.resize(SIZE);
-        const char* iter = reinterpret_cast<char*>(&a_typeCode);
+		const char* iter = reinterpret_cast<char*>(&a_typeCode);
 		for (std::size_t i = 0, j = SIZE - 2; i < SIZE - 1; ++i, --j) {
 			sig[j] = iter[i];
 		}
@@ -59,9 +59,9 @@ namespace Serialization
 
 		SAVE<OnFECResetRegMap>(a_intfc, kFECReset);
 
-		SAVE<FORM::PerkManager>(a_intfc, kAddPerks, kRemovePerks);
-		SAVE<FORM::KeywordManager>(a_intfc, kAddKeywords, kRemoveKeywords);
-		
+		SAVE<::FORM::PerkManager>(a_intfc, kAddPerks, kRemovePerks);
+		SAVE<::FORM::KeywordManager>(a_intfc, kAddKeywords, kRemoveKeywords);
+
 		SAVE<DETECTION::TargetManager>(a_intfc, kTargetHide, kTargetAlert);
 		SAVE<DETECTION::SourceManager>(a_intfc, kSourceHide, kSourceAlert);
 
@@ -170,16 +170,16 @@ namespace Serialization
 				LOAD<OnFECResetRegMap>(a_intfc);
 				break;
 			case kAddPerks:
-				LOAD<FORM::PerkManager>(a_intfc, FORM::kAdd);
+				LOAD<::FORM::PerkManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemovePerks:
-				LOAD<FORM::PerkManager>(a_intfc, FORM::kRemove);
+				LOAD<::FORM::PerkManager>(a_intfc, ::FORM::kRemove);
 				break;
 			case kAddKeywords:
-				LOAD<FORM::KeywordManager>(a_intfc, FORM::kAdd);
+				LOAD<::FORM::KeywordManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemoveKeywords:
-				LOAD<FORM::KeywordManager>(a_intfc, FORM::kRemove);
+				LOAD<::FORM::KeywordManager>(a_intfc, ::FORM::kRemove);
 				break;
 			case kTargetHide:
 				LOAD<DETECTION::TargetManager>(a_intfc, DETECTION::kHide);
@@ -194,16 +194,16 @@ namespace Serialization
 				LOAD<DETECTION::SourceManager>(a_intfc, DETECTION::kAlert);
 				break;
 			case kAddMGEF:
-				LOAD<MAGIC::MGEFManager>(a_intfc, FORM::kAdd);
+				LOAD<MAGIC::MGEFManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemoveMGEF:
-				LOAD<MAGIC::MGEFManager>(a_intfc, FORM::kRemove);
+				LOAD<MAGIC::MGEFManager>(a_intfc, ::FORM::kRemove);
 				break;
 			case kAddEffect:
-				LOAD<MAGIC::EffectManager>(a_intfc, FORM::kAdd);
+				LOAD<MAGIC::EffectManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemoveEffect:
-				LOAD<MAGIC::EffectManager>(a_intfc, FORM::kRemove);
+				LOAD<MAGIC::EffectManager>(a_intfc, ::FORM::kRemove);
 				break;
 			default:
 				logger::critical("Unrecognized record type ({})!"sv, DecodeTypeCode(type));
@@ -249,8 +249,8 @@ namespace Serialization
 
 		REVERT<OnFECResetRegMap>(a_intfc);
 
-		REVERT<FORM::PerkManager>(a_intfc);
-		REVERT<FORM::KeywordManager>(a_intfc);
+		REVERT<::FORM::PerkManager>(a_intfc);
+		REVERT<::FORM::KeywordManager>(a_intfc);
 
 		REVERT<DETECTION::TargetManager>(a_intfc);
 		REVERT<DETECTION::SourceManager>(a_intfc);
@@ -261,7 +261,7 @@ namespace Serialization
 		logger::info("Finished reverting data"sv);
 	}
 
-    void FormDeleteCallback(RE::VMHandle a_handle)
+	void FormDeleteCallback(RE::VMHandle a_handle)
 	{
 		FORM_DELETE<OnCellFullyLoadedRegSet>(a_handle);
 		FORM_DELETE<OnQuestStartRegMap>(a_handle);
@@ -298,7 +298,7 @@ namespace Serialization
 		FORM_DELETE<OnFECResetRegMap>(a_handle);
 	}
 
-    namespace FormDeletion
+	namespace FormDeletion
 	{
 		EventHandler* EventHandler::GetSingleton()
 		{
@@ -310,10 +310,10 @@ namespace Serialization
 		{
 			if (a_event && a_event->formID != 0) {
 				const auto formID = a_event->formID;
-				
-				FORM_DELETE<FORM::KeywordManager>(formID);
-				FORM_DELETE<FORM::PerkManager>(formID);
-				
+
+				FORM_DELETE<::FORM::KeywordManager>(formID);
+				FORM_DELETE<::FORM::PerkManager>(formID);
+
 				FORM_DELETE<DETECTION::TargetManager>(formID);
 				FORM_DELETE<DETECTION::SourceManager>(formID);
 			}
@@ -329,5 +329,5 @@ namespace Serialization
 				logger::info("Registered form deletion event handler"sv);
 			}
 		}
-	} 
+	}
 }

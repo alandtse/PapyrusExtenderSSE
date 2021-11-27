@@ -151,7 +151,7 @@ namespace Papyrus::ObjectReference
 		}
 
 		if (const auto form = a_ref->GetObjectReference(); form) {
-			FORM::KeywordManager::GetSingleton()->Add(form, a_keyword);
+			::FORM::KeywordManager::GetSingleton()->Add(form, a_keyword);
 		}
 	}
 
@@ -832,7 +832,7 @@ namespace Papyrus::ObjectReference
 			return -1;
 		}
 
-		return stl::to_underlying(a_ref->extraList.GetSoulLevel());
+		return ::stl::to_underlying(a_ref->extraList.GetSoulLevel());
 	}
 
 	inline std::uint32_t HasArtObject(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
@@ -1041,7 +1041,7 @@ namespace Papyrus::ObjectReference
 		}
 
 		const auto form = a_ref->GetObjectReference();
-		return form && FORM::KeywordManager::GetSingleton()->Remove(form, a_keyword);
+		return form && ::FORM::KeywordManager::GetSingleton()->Remove(form, a_keyword);
 	}
 
 	inline void PlayDebugShader(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
@@ -1463,7 +1463,7 @@ namespace Papyrus::ObjectReference
 
 					if (!result.empty()) {
 						std::string name{ "PO3_SHADER | "sv };
-						name.append(std::to_string(stl::to_underlying(feature)));
+						name.append(std::to_string(::stl::to_underlying(feature)));
 
 						SET::add_data_if_none<RE::NiStringsExtraData>(root, name, result);
 					}
