@@ -665,7 +665,6 @@ namespace CONDITION
 
 		return result;
 	}
-
 	ConditionDataVec ParseConditions(const std::vector<std::string>& a_conditionList)
 	{
 		ConditionDataVec dataVec;
@@ -679,7 +678,7 @@ namespace CONDITION
 			auto split_condition = string::split(condition, " | ");
 			//conditionItemObject
 			try {
-				auto str = string::trim_copy(split_condition.at(stl::to_underlying(TYPE::kConditionItemObject)));
+				auto str = string::trim_copy(split_condition.at(::stl::to_underlying(TYPE::kConditionItemObject)));
 				if (string::is_only_digit(str)) {
 					conditionItem = static_cast<OBJECT>(std::stoul(str));
 				} else {
@@ -694,7 +693,7 @@ namespace CONDITION
 			}
 			//functionID
 			try {
-				auto str = string::trim_copy(split_condition.at(stl::to_underlying(TYPE::kFunctionID)));
+				auto str = string::trim_copy(split_condition.at(::stl::to_underlying(TYPE::kFunctionID)));
 				if (string::is_only_digit(str)) {
 					functionID = static_cast<FUNC_ID>(std::stoul(str));
 				} else {
@@ -707,7 +706,7 @@ namespace CONDITION
 			}
 			//param1
 			try {
-				auto str = string::trim_copy(split_condition.at(stl::to_underlying(TYPE::kParam1)));
+				auto str = string::trim_copy(split_condition.at(::stl::to_underlying(TYPE::kParam1)));
 				if (is_string_valid(str)) {
 					auto result = ParseVoidParams(str, param1, paramPair.first);
 					if (!result) {
@@ -719,7 +718,7 @@ namespace CONDITION
 			}
 			//param2
 			try {
-				auto str = string::trim_copy(split_condition.at(stl::to_underlying(TYPE::kParam2)));
+				auto str = string::trim_copy(split_condition.at(::stl::to_underlying(TYPE::kParam2)));
 				if (is_string_valid(str)) {
 					auto result = ParseVoidParams(str, param2, paramPair.second);
 					if (!result) {
@@ -733,7 +732,7 @@ namespace CONDITION
 			try {
 				using OPCODE = RE::CONDITION_ITEM_DATA::OpCode;
 
-				auto str = string::trim_copy(split_condition.at(stl::to_underlying(TYPE::kOPCode)));
+				auto str = string::trim_copy(split_condition.at(::stl::to_underlying(TYPE::kOPCode)));
 				if (string::is_only_digit(str)) {
 					operationCode = static_cast<OPCODE>(std::stoul(str));
 				} else {
@@ -745,14 +744,14 @@ namespace CONDITION
 			}
 			//float
 			try {
-				auto str = string::trim_copy(split_condition.at(stl::to_underlying(TYPE::kFloat)));
+				auto str = string::trim_copy(split_condition.at(::stl::to_underlying(TYPE::kFloat)));
 				floatVal = std::stof(str);
 			} catch (...) {
 				continue;
 			}
 			//operator
 			try {
-				auto str = string::trim_copy(split_condition.at(stl::to_underlying(TYPE::kANDOR)));
+				auto str = string::trim_copy(split_condition.at(::stl::to_underlying(TYPE::kANDOR)));
 				operatorVal = str.find("OR"sv) != std::string::npos;
 			} catch (...) {
 				continue;

@@ -50,7 +50,7 @@ namespace Papyrus::Package
 			return -1;
 		}
 
-		return stl::to_underlying(a_package->packData.packType.get());
+		return ::stl::to_underlying(a_package->packData.packType.get());
 	}
 
 	inline void RemovePackageIdle(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,

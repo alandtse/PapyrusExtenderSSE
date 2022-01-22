@@ -89,7 +89,7 @@ namespace Papyrus::Spell
 			return -1;
 		}
 
-		return stl::to_underlying(a_spell->data.spellType);
+		return ::stl::to_underlying(a_spell->data.spellType);
 	}
 
 	inline void RemoveMagicEffectFromSpell(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,

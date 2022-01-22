@@ -21,7 +21,7 @@ namespace Papyrus::Form
 			return;
 		}
 
-		FORM::KeywordManager::GetSingleton()->Add(a_form, a_keyword);
+		::FORM::KeywordManager::GetSingleton()->Add(a_form, a_keyword);
 	}
 
 	inline void ClearRecordFlag(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
@@ -314,7 +314,7 @@ namespace Papyrus::Form
 			return false;
 		}
 
-		return FORM::KeywordManager::GetSingleton()->Remove(a_form, a_keyword);
+		return ::FORM::KeywordManager::GetSingleton()->Remove(a_form, a_keyword);
 	}
 
 	inline void ReplaceKeywordOnForm(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,

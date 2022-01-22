@@ -208,7 +208,7 @@ namespace Event
 			return EventResult::kContinue;
 		}
 
-		StoryEventHolder::GetSingleton()->skillIncrease.QueueEvent(stl::to_underlying(a_event->actorValue));
+		StoryEventHolder::GetSingleton()->skillIncrease.QueueEvent(::stl::to_underlying(a_event->actorValue));
 
 		return EventResult::kContinue;
 	}
@@ -263,10 +263,10 @@ namespace Event::GameEventHandler
 		inline void Install()
 		{
 			REL::Relocation<std::uintptr_t> take_ragdoll_damage{ REL::ID(36346) };
-			stl::write_thunk_call<CalcDoDamage>(take_ragdoll_damage.address() + 0x35);
+			::stl::write_thunk_call<CalcDoDamage>(take_ragdoll_damage.address() + 0x35);
 
 			REL::Relocation<std::uintptr_t> process_movefinish_event{ REL::ID(36973) };
-			stl::write_thunk_call<CalcDoDamage>(process_movefinish_event.address() + 0xAE);
+			::stl::write_thunk_call<CalcDoDamage>(process_movefinish_event.address() + 0xAE);
 
 			logger::info("Hooked Fall Damage"sv);
 		}
@@ -287,7 +287,7 @@ namespace Event::GameEventHandler
 
 		void Install()
 		{
-			stl::write_vfunc<RE::Character,
+			::stl::write_vfunc<RE::Character,
 #ifndef SKYRIMVR
 				0x0AB
 #else
@@ -358,8 +358,8 @@ namespace Event::GameEventHandler
 
 		void Install()
 		{
-			stl::write_vfunc<RE::ReanimateEffect, 0x14, Start>();
-			stl::write_vfunc<RE::ReanimateEffect, 0x15, Stop>();
+			::stl::write_vfunc<RE::ReanimateEffect, 0x14, Start>();
+			::stl::write_vfunc<RE::ReanimateEffect, 0x15, Stop>();
 
 			logger::info("Hooked Actor Reanimate Start"sv);
 			logger::info("Hooked Actor Reanimate Stop"sv);
@@ -391,7 +391,7 @@ namespace Event::GameEventHandler
 		static void Install()
 		{
 			REL::Relocation<std::uintptr_t> target{ REL::ID(33742), 0x1E8 };
-			stl::write_thunk_call<MagicTargetApply>(target.address());
+			::stl::write_thunk_call<MagicTargetApply>(target.address());
 
 			logger::info("Hooked Magic Effect Apply"sv);
 		}
@@ -419,7 +419,7 @@ namespace Event::GameEventHandler
 		void Install()
 		{
 			REL::Relocation<std::uintptr_t> target{ REL::ID(37832), 0x1C3 };
-			stl::write_thunk_call<SendHitEvent>(target.address());
+			::stl::write_thunk_call<SendHitEvent>(target.address());
 
 			logger::info("Hooked Magic Hit"sv);
 		}
@@ -443,7 +443,7 @@ namespace Event::GameEventHandler
 					if (const auto aggressor = a_aggressor.get(); aggressor) {
 						const auto hitTarget = a_target.get();
 						const auto source = RE::TESForm::LookupByID(a_source);
-						const auto flags = stl::to_underlying(a_data.flags);
+						const auto flags = ::stl::to_underlying(a_data.flags);
 
 						GameEventHolder::GetSingleton()->weaponHit.QueueEvent(aggressor, hitTarget, source, nullptr, flags);
 					}
@@ -499,9 +499,9 @@ namespace Event::GameEventHandler
 
 		inline void Install()
 		{
-			stl::write_thunk_call<Actor::SendHitEvent>(Actor::target.address());
-			stl::write_thunk_call<Static::SendHitEvent>(Static::target.address());
-			stl::write_thunk_call<Projectile::SendHitEvent>(Projectile::target.address());
+			::stl::write_thunk_call<Actor::SendHitEvent>(Actor::target.address());
+			::stl::write_thunk_call<Static::SendHitEvent>(Static::target.address());
+			::stl::write_thunk_call<Projectile::SendHitEvent>(Projectile::target.address());
 
 			logger::info("Hooked Weapon Hit"sv);
 		}
@@ -534,7 +534,7 @@ namespace Event::GameEventHandler
 		void Install()
 		{
 			REL::Relocation<std::uintptr_t> target{ REL::ID(25684) };
-			stl::write_thunk_call<SetCurrentWeather>(target.address() + 0x44F);
+			::stl::write_thunk_call<SetCurrentWeather>(target.address() + 0x44F);
 
 			logger::info("Hooked Weather Change"sv);
 		}

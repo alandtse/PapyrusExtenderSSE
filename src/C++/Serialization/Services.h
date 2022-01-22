@@ -24,7 +24,7 @@ namespace FORM
 		bool Process(RE::TESForm* a_form, RE::BGSKeyword* a_data, std::uint32_t a_index) override
 		{
 			if (const auto keywordForm = a_form->As<RE::BGSKeywordForm>(); keywordForm) {
-				return a_index == FORM::kAdd ?
+				return a_index == ::FORM::kAdd ?
                            keywordForm->AddKeyword(a_data) :
                            keywordForm->RemoveKeyword(a_data);
 			}
@@ -56,13 +56,13 @@ namespace FORM
 			bool success = false;
 
 			if (const auto actorbase = a_form->GetActorBase(); actorbase) {
-				success = a_index == FORM::kAdd ?
+				success = a_index == ::FORM::kAdd ?
                               actorbase->AddPerk(a_data, 1) :
                               actorbase->RemovePerk(a_data);
 				if (success) {
 					for (auto& perkEntry : a_data->perkEntries) {
 						if (perkEntry) {
-							a_index == FORM::kAdd ?
+							a_index == ::FORM::kAdd ?
                                 perkEntry->ApplyPerkEntry(a_form) :
                                 perkEntry->RemovePerkEntry(a_form);
 						}
@@ -212,7 +212,7 @@ namespace MAGIC
 						return false;
 					}
 					for (auto& condition : data.conditionList) {
-						stl::write_string(a_intfc, condition);
+						::stl::write_string(a_intfc, condition);
 					}
 				}
 			}
@@ -266,7 +266,7 @@ namespace MAGIC
 					a_intfc->ReadRecordData(numConditions);
 					for (std::size_t k = 0; k < numConditions; k++) {
 						std::string str;
-						if (stl::read_string(a_intfc, str)) {
+						if (::stl::read_string(a_intfc, str)) {
 							data.conditionList.emplace_back(str);
 						}
 					}
@@ -367,7 +367,7 @@ namespace MAGIC
 
 		bool Process(RE::MagicItem* a_form, const MGEFData& a_data, std::uint32_t a_index) override
 		{
-			return a_index == FORM::kAdd ?
+			return a_index == ::FORM::kAdd ?
                        detail::add_magic_effect(a_form, a_data) :
                        detail::remove_magic_effect(a_form, a_data);
 		}
@@ -574,7 +574,7 @@ namespace MAGIC
 
 		bool Process(RE::MagicItem* a_form, const EffectData& a_data, std::uint32_t a_index) override
 		{
-			return a_index == FORM::kAdd ?
+			return a_index == ::FORM::kAdd ?
                        detail::add_effect_item(a_form, a_data) :
                        detail::remove_effect_item(a_form, a_data);
 		}

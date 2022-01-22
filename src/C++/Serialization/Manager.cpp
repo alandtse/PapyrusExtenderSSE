@@ -27,8 +27,8 @@ namespace Serialization
 		StoryEventHolder::GetSingleton()->Save(a_intfc, kSerializationVersion);
 		GameEventHolder::GetSingleton()->Save(a_intfc, kSerializationVersion);
 
-		SAVE<FORM::PerkManager>(a_intfc, kAddPerks, kRemovePerks);
-		SAVE<FORM::KeywordManager>(a_intfc, kAddKeywords, kRemoveKeywords);
+		SAVE<::FORM::PerkManager>(a_intfc, kAddPerks, kRemovePerks);
+		SAVE<::FORM::KeywordManager>(a_intfc, kAddKeywords, kRemoveKeywords);
 
 		SAVE<DETECTION::TargetManager>(a_intfc, kTargetHide, kTargetAlert);
 		SAVE<DETECTION::SourceManager>(a_intfc, kSourceHide, kSourceAlert);
@@ -51,16 +51,16 @@ namespace Serialization
 			}
 			switch (type) {
 			case kAddPerks:
-				LOAD<FORM::PerkManager>(a_intfc, FORM::kAdd);
+				LOAD<::FORM::PerkManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemovePerks:
-				LOAD<FORM::PerkManager>(a_intfc, FORM::kRemove);
+				LOAD<::FORM::PerkManager>(a_intfc, ::FORM::kRemove);
 				break;
 			case kAddKeywords:
-				LOAD<FORM::KeywordManager>(a_intfc, FORM::kAdd);
+				LOAD<::FORM::KeywordManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemoveKeywords:
-				LOAD<FORM::KeywordManager>(a_intfc, FORM::kRemove);
+				LOAD<::FORM::KeywordManager>(a_intfc, ::FORM::kRemove);
 				break;
 			case kTargetHide:
 				LOAD<DETECTION::TargetManager>(a_intfc, DETECTION::kHide);
@@ -75,16 +75,16 @@ namespace Serialization
 				LOAD<DETECTION::SourceManager>(a_intfc, DETECTION::kAlert);
 				break;
 			case kAddMGEF:
-				LOAD<MAGIC::MGEFManager>(a_intfc, FORM::kAdd);
+				LOAD<MAGIC::MGEFManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemoveMGEF:
-				LOAD<MAGIC::MGEFManager>(a_intfc, FORM::kRemove);
+				LOAD<MAGIC::MGEFManager>(a_intfc, ::FORM::kRemove);
 				break;
 			case kAddEffect:
-				LOAD<MAGIC::EffectManager>(a_intfc, FORM::kAdd);
+				LOAD<MAGIC::EffectManager>(a_intfc, ::FORM::kAdd);
 				break;
 			case kRemoveEffect:
-				LOAD<MAGIC::EffectManager>(a_intfc, FORM::kRemove);
+				LOAD<MAGIC::EffectManager>(a_intfc, ::FORM::kRemove);
 				break;
 			default:
 				{
@@ -104,8 +104,8 @@ namespace Serialization
 		StoryEventHolder::GetSingleton()->Revert(a_intfc);
 		GameEventHolder::GetSingleton()->Revert(a_intfc);
 
-		REVERT<FORM::PerkManager>(a_intfc);
-		REVERT<FORM::KeywordManager>(a_intfc);
+		REVERT<::FORM::PerkManager>(a_intfc);
+		REVERT<::FORM::KeywordManager>(a_intfc);
 
 		REVERT<DETECTION::TargetManager>(a_intfc);
 		REVERT<DETECTION::SourceManager>(a_intfc);
@@ -130,8 +130,8 @@ namespace Serialization
 			if (a_event && a_event->formID != 0) {
 				const auto formID = a_event->formID;
 
-				FORM_DELETE<FORM::KeywordManager>(formID);
-				FORM_DELETE<FORM::PerkManager>(formID);
+				FORM_DELETE<::FORM::KeywordManager>(formID);
+				FORM_DELETE<::FORM::PerkManager>(formID);
 
 				FORM_DELETE<DETECTION::TargetManager>(formID);
 				FORM_DELETE<DETECTION::SourceManager>(formID);

@@ -19,7 +19,7 @@ namespace Papyrus::Actor
 			return false;
 		}
 
-		return FORM::PerkManager::GetSingleton()->Add(a_actor, a_perk);
+		return ::FORM::PerkManager::GetSingleton()->Add(a_actor, a_perk);
 	}
 
 	inline bool AddBaseSpell(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
@@ -346,7 +346,7 @@ namespace Papyrus::Actor
 			return -1;
 		}
 
-		return stl::to_underlying(a_actor->GetSoulSize());
+		return ::stl::to_underlying(a_actor->GetSoulSize());
 	}
 
 	inline std::int32_t GetActorState(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, const RE::Actor* a_actor)
@@ -356,7 +356,7 @@ namespace Papyrus::Actor
 			return -1;
 		}
 
-		return stl::to_underlying(a_actor->GetLifeState());
+		return ::stl::to_underlying(a_actor->GetLifeState());
 	}
 
 	inline float GetActorValueModifier(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,
@@ -387,7 +387,7 @@ namespace Papyrus::Actor
 			return 0;
 		}
 
-		return stl::to_underlying(a_actor->criticalStage.get());
+		return ::stl::to_underlying(a_actor->criticalStage.get());
 	}
 
 	inline std::vector<RE::Actor*> GetCombatAllies(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, const RE::Actor* a_actor)
@@ -923,7 +923,7 @@ namespace Papyrus::Actor
 			return false;
 		}
 
-		return FORM::PerkManager::GetSingleton()->Remove(a_actor, a_perk);
+		return ::FORM::PerkManager::GetSingleton()->Remove(a_actor, a_perk);
 	}
 
 	inline bool RemoveBaseSpell(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*,

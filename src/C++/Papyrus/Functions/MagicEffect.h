@@ -19,7 +19,7 @@ namespace Papyrus::MagicEffect
 			return 0;
 		}
 
-		return stl::to_underlying(a_mgef->GetArchetype());
+		return ::stl::to_underlying(a_mgef->GetArchetype());
 	}
 
 	inline RE::BSFixedString GetEffectArchetypeAsString(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, const RE::EffectSetting* a_mgef)
