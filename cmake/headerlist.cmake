@@ -1,5 +1,8 @@
 set(headers ${headers}
+	include/API/API.h
 	include/API/DescriptionFrameworkAPI.h
+	include/API/DismemberingFrameworkAPI.h
+	include/API/NextGenDecapitationsAPI.h
 	include/Common.h
 	include/Game/EventHandler.h
 	include/Game/HookedEventHandler.h
@@ -28,7 +31,7 @@ set(headers ${headers}
 	include/Papyrus/Functions/Graphics.h
 	include/Papyrus/Functions/Hazard.h
 	include/Papyrus/Functions/Idle.h
-	include/Papyrus/Functions/LeveledItem.h
+	include/Papyrus/Functions/LeveledList.h
 	include/Papyrus/Functions/Light.h
 	include/Papyrus/Functions/Location.h
 	include/Papyrus/Functions/MagicEffect.h
@@ -37,6 +40,7 @@ set(headers ${headers}
 	include/Papyrus/Functions/Potion.h
 	include/Papyrus/Functions/Projectile.h
 	include/Papyrus/Functions/Quest.h
+	include/Papyrus/Functions/Scene.h
 	include/Papyrus/Functions/Scroll.h
 	include/Papyrus/Functions/Sound.h
 	include/Papyrus/Functions/Spell.h
@@ -47,13 +51,14 @@ set(headers ${headers}
 	include/Papyrus/Functions/Weather.h
 	include/Papyrus/Manager.h
 	include/Papyrus/ObjectTypes.h
+	include/Papyrus/Util/ActorGraphics.h
 	include/Papyrus/Util/ConditionParser.h
 	include/Papyrus/Util/Graphics.h
 	include/Papyrus/Util/Inventory.h
+	include/Papyrus/Util/Magic.h
 	include/Papyrus/Util/Script.h
 	include/Serialization/EventHolder.h
 	include/Serialization/Manager.h
 	include/Serialization/Registration/DataMap.h
 	include/Serialization/Registration/DataSet.h
-	include/Serialization/Services.h
 )

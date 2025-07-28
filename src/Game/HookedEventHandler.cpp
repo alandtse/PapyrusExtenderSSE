@@ -15,10 +15,11 @@ namespace Event
 				}
 				return result;
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
-		inline void Install()
+		void Install()
 		{
 			REL::Relocation<std::uintptr_t> bookMenu{ RELOCATION_ID(50122, 51053), OFFSET_3(0x22D, 0x231, 0x295) };
 			stl::write_thunk_call<Read>(bookMenu.address());
@@ -49,6 +50,7 @@ namespace Event
 
 				return hasAppliedEffect;
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -96,6 +98,7 @@ namespace Event
 
 					func(a_source, a_event);
 				}
+
 				static inline REL::Relocation<decltype(thunk)> func;
 			};
 
@@ -142,7 +145,7 @@ namespace Event
 						}
 
 						if (aggressor && hitTarget) {
-							GameEventHolder::GetSingleton()->weaponHit.QueueEvent(aggressor.get(), hitTarget, source, nullptr, std::to_underlying(*a_data.flags));
+							GameEventHolder::GetSingleton()->weaponHit.QueueEvent(aggressor.get(), hitTarget, source, nullptr, a_data.flags.underlying());
 						}
 					}
 #else
@@ -172,7 +175,7 @@ namespace Event
 						}
 
 						if (aggressor) {
-							GameEventHolder::GetSingleton()->weaponHit.QueueEvent(aggressor, hitTarget, source, nullptr, std::to_underlying(*a_data.flags));
+							GameEventHolder::GetSingleton()->weaponHit.QueueEvent(aggressor, hitTarget, source, nullptr, a_data.flags.underlying());
 						}
 
 						func(a_holder, a_target, a_aggressor, a_source, a_projectile, a_data);
@@ -214,46 +217,66 @@ namespace Event
 
 						func(a_source, a_event);
 					}
+
 					static inline REL::Relocation<decltype(thunk)> func;
 				};
 			}
 
 			namespace Projectile
 			{
-				REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(43022, 44213), OFFSET(0x38D, 0x357) };
+				REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(43022, 44213) };
 
-				struct SendHitEvent
+				struct SpawnCollisionEffects
 				{
-					static void thunk(RE::BSTEventSource<RE::TESHitEvent>& a_source, RE::TESHitEvent& a_event)
+					static void thunk(RE::Projectile* a_this, RE::TESObjectREFR* a_collidee, const RE::NiPoint3& a_contactPoint, const RE::NiPoint3& a_contactNormal, RE::MATERIAL_ID a_material, bool a_rotateToProjectileDirection)
 					{
-						const auto aggressor = a_event.cause.get();
-						const auto hitTarget = a_event.target.get();
-						const auto source = RE::TESForm::LookupByID(a_event.source);
-						const auto projectile = RE::TESForm::LookupByID<RE::BGSProjectile>(a_event.projectile);
+						auto effectNotSpawned = a_this->flags.none(RE::Projectile::Flags::kAddedVisualEffectOnGround);
+						func(a_this, a_collidee, a_contactPoint, a_contactNormal, a_material, a_rotateToProjectileDirection);
+						if (effectNotSpawned && a_collidee) {
+							RE::BGSProjectile* projectile = a_this->GetProjectileBase();
 
-						if (hitTarget) {
-							const auto powerAttack = a_event.flags.any(RE::TESHitEvent::Flag::kPowerAttack);
-							const auto sneakAttack = a_event.flags.any(RE::TESHitEvent::Flag::kSneakAttack);
-							const auto bashAttack = a_event.flags.any(RE::TESHitEvent::Flag::kBashAttack);
-							const auto hitBlocked = a_event.flags.any(RE::TESHitEvent::Flag::kHitBlocked);
-
-							GameEventHolder::GetSingleton()->onHit.QueueEvent(
-								hitTarget,
-								[=](const Filter::Hit& a_filter, bool a_match) {
-									return a_match == a_filter.PassesFilter(aggressor, source, projectile, powerAttack, sneakAttack, bashAttack, hitBlocked);
-								},
-								aggressor, source, projectile, powerAttack, sneakAttack, bashAttack, hitBlocked);
-						}
-
-						if (aggressor) {
-							if (projectile && projectile->IsArrow()) {
-								GameEventHolder::GetSingleton()->weaponHit.QueueEvent(aggressor, hitTarget, source, projectile, 0);
+							RE::ActorPtr aggressor{};
+							if (const auto actorCause = a_this->GetActorCause()) {
+								aggressor = actorCause->actor.get();
 							}
-							GameEventHolder::GetSingleton()->projectileHit.QueueEvent(aggressor, hitTarget, source, projectile);
-						}
 
-						func(a_source, a_event);
+							RE::TESObjectREFRPtr hitTarget{};
+							if (auto handle = a_collidee->CreateRefHandle()) {
+								hitTarget = handle.get();
+							}
+
+							RE::TESForm* source{};
+							if (a_this->weaponSource) {
+								source = a_this->weaponSource;
+							} else if (a_this->spell) {
+								source = a_this->spell;
+							}
+
+							if (hitTarget) {
+								constexpr auto powerAttack = false;
+								const auto     sneakAttack = aggressor && aggressor->IsSneaking();  // Magic Sneak Attacks
+								constexpr auto bashAttack = false;
+								constexpr auto hitBlocked = false;
+
+								GameEventHolder::GetSingleton()->onHit.QueueEvent(
+									hitTarget.get(),
+									[=](const Filter::Hit& a_filter, bool a_match) {
+										return a_match == a_filter.PassesFilter(aggressor.get(), source, projectile, powerAttack, sneakAttack, bashAttack, hitBlocked);
+									},
+									aggressor.get(), source, projectile, powerAttack, sneakAttack, bashAttack, hitBlocked);
+							}
+
+							if (aggressor) {
+								if (projectile && projectile->IsArrow()) {
+									if (hitTarget && !hitTarget->IsActor()) {  // actor version takes care of arrow hits
+										GameEventHolder::GetSingleton()->weaponHit.QueueEvent(aggressor.get(), hitTarget.get(), source, projectile, 0);
+									}
+								}
+								GameEventHolder::GetSingleton()->projectileHit.QueueEvent(aggressor.get(), hitTarget.get(), source, projectile);
+							}
+						}
 					}
+
 					static inline REL::Relocation<decltype(thunk)> func;
 				};
 			}
@@ -262,7 +285,7 @@ namespace Event
 			{
 				stl::write_thunk_call<Actor::SendHitEvent>(Actor::target.address());
 				stl::write_thunk_call<Static::SendHitEvent>(Static::target.address());
-				stl::write_thunk_call<Projectile::SendHitEvent>(Projectile::target.address());
+				stl::hook_function_prologue<Projectile::SpawnCollisionEffects, OFFSET(6, 7)>(Projectile::target.address());
 
 				logger::info("Hooked Weapon Hit"sv);
 			}
@@ -277,10 +300,11 @@ namespace Event
 			{
 				const auto fallDamage = func(a_this, a_fallDistance, a_defaultMult);
 				if (fallDamage > 0.0f) {
-					GameEventHolder::GetSingleton()->actorFallLongDistance.QueueEvent(a_this, a_this, a_fallDistance, fallDamage);
+					GameEventHolder::GetSingleton()->actorFallLongDistance.QueueEvent(a_this, a_fallDistance, fallDamage);
 				}
 				return fallDamage;
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -304,7 +328,7 @@ namespace Event
 			if (const auto marker = a_refr ? a_refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr) {
 				if (const auto mapData = marker->mapData) {
 					logger::debug("Found candidate map marker {} {}", mapData->locationName.GetFullName(), mapData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo));
-					logger::info("Found mapmarker match for {} target {} {} ({:X})", typeid(T).name(), mapData->locationName.GetFullName(), mapData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo), a_refr->GetFormID());
+					logger::debug("Found mapmarker match for {} target {} {} ({:X})", typeid(T).name(), mapData->locationName.GetFullName(), mapData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo), a_refr->GetFormID());
 					return a_refr;
 				}
 			}
@@ -315,11 +339,13 @@ namespace Event
 		{
 			return GetMapMarkerFromObject<RE::TESObjectREFR>(a_refr.get());
 		}
+
 		RE::TESObjectREFR* GetMapMarkerObject(const RE::FormID a_formID)
 		{
 			auto* refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(a_formID);
 			return GetMapMarkerFromObject<RE::FormID>(refr);
 		}
+
 		RE::TESObjectREFR* GetMapMarkerObject(const char* a_name)
 		{
 			const auto& mapMarkers = RE::PlayerCharacter::GetSingleton()->currentMapMarkers;
@@ -345,11 +371,11 @@ namespace Event
 					const auto xMapMarker = refr ? refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
 					const auto name = xMapMarker && xMapMarker->mapData ? xMapMarker->mapData->locationName.GetFullName() : "Unknown";
 					const auto formID = refr ? refr->GetFormID() : 0;
-					logger::info("Found Fast Travel Confirmed target to {} ({:x})", name, formID);
+					logger::debug("Found Fast Travel Confirmed target to {} ({:x})", name, formID);
 				}
 
 				if (disableFastTravel) {
-					logger::info("Fast Travel is disabled; cancelling trip");
+					logger::debug("Fast Travel is disabled; cancelling trip");
 
 					func(a_this, RE::IMessageBoxCallback::Message::kUnk0);
 					RE::UIMessageQueue::GetSingleton()->AddMessage(RE::MapMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
@@ -358,16 +384,16 @@ namespace Event
 
 				const auto start = std::chrono::steady_clock::now();
 				if (!newDestination && defaultTimeout > 0.0f) {
-					logger::info("Waiting for newDestination for {:.2f} seconds", defaultTimeout);
+					logger::debug("Waiting for newDestination for {:.2f} seconds", defaultTimeout);
 				}
 				while (defaultTimeout > 0.0f) {
 					std::chrono::duration<float> elapsed_seconds = std::chrono::steady_clock::now() - start;
 					if (newDestination) {
-						logger::info("newDestination received after {:.2f} seconds", elapsed_seconds.count());
+						logger::debug("newDestination received after {:.2f} seconds", elapsed_seconds.count());
 						break;
 					}
 					if (elapsed_seconds.count() > defaultTimeout) {
-						logger::info("newDestination not received after {:.2f} seconds; proceeding", elapsed_seconds.count());
+						logger::debug("newDestination not received after {:.2f} seconds; proceeding", elapsed_seconds.count());
 						break;
 					}
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -381,11 +407,12 @@ namespace Event
 					const auto xMapMarker = refr ? refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
 					const auto name = xMapMarker && xMapMarker->mapData ? xMapMarker->mapData->locationName.GetFullName() : "Unknown";
 					const auto formID = refr ? refr->GetFormID() : 0;
-					logger::info("Changed Fast Travel target to {} ({:X})", name, formID);
+					logger::debug("Changed Fast Travel target to {} ({:X})", name, formID);
 				}
 
 				func(a_this, a_message);
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 
 			static inline RE::TESObjectREFR* newDestination{ nullptr };
@@ -408,13 +435,14 @@ namespace Event
 				}
 				return func(a_buffer, a_template, a_target);
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
 		bool SetFastTravelDisabled(const bool a_disable)
 		{
 			if (ChangeFastTravelTarget::disableFastTravel != a_disable) {
-				logger::info("Set Fast Travel Disabled {} -> {}", ChangeFastTravelTarget::disableFastTravel, a_disable);
+				logger::debug("Set Fast Travel Disabled {} -> {}", ChangeFastTravelTarget::disableFastTravel, a_disable);
 				ChangeFastTravelTarget::disableFastTravel = a_disable;
 			}
 			return ChangeFastTravelTarget::disableFastTravel;
@@ -423,7 +451,7 @@ namespace Event
 		float SetFastTravelWaitTimeout(const float a_timeout)
 		{
 			if (ChangeFastTravelTarget::defaultTimeout != a_timeout) {
-				logger::info("Set Fast Travel Wait Timeout {:.2f} -> {:.2f}", ChangeFastTravelTarget::defaultTimeout, a_timeout);
+				logger::debug("Set Fast Travel Wait Timeout {:.2f} -> {:.2f}", ChangeFastTravelTarget::defaultTimeout, a_timeout);
 
 				ChangeFastTravelTarget::defaultTimeout = a_timeout;
 			}
@@ -437,10 +465,10 @@ namespace Event
 			if (const auto newDestination = ChangeFastTravelTarget::newDestination) {
 				if (const auto mapmarker = newDestination->extraList.GetByType<RE::ExtraMapMarker>(); mapmarker && mapmarker->mapData) {
 					const auto name = mapmarker->mapData->locationName.GetFullName();
-					logger::info("Set new Fast Travel target {}", name);
+					logger::debug("Set new Fast Travel target {}", name);
 				}
 			} else {
-				logger::info("Cleared Fast Travel target");
+				logger::debug("Cleared Fast Travel target");
 			}
 
 			return ChangeFastTravelTarget::newDestination != nullptr;
@@ -464,6 +492,7 @@ namespace Event
 				func(a_process);
 				GameEventHolder::GetSingleton()->fastTravelEnd.QueueEvent(afTravelGameTimeHours);
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 
 			static inline float afTravelGameTimeHours{ 0.0f };
@@ -486,6 +515,7 @@ namespace Event
 				const auto result = gameDaysPassedPostTravel ? (gameDaysPassedPostTravel->value - GameDaysPassedPreTravel) * 24.0f : 0.0f;
 				FastTravelEndEvent::afTravelGameTimeHours = result;
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -520,6 +550,7 @@ namespace Event
 			RE::BGSLocation*    location;      // 08
 			RE::TESForm*        form;          // 10
 		};
+
 		static_assert(sizeof(StoryItemCraft) == 0x18);
 
 		struct StoryCraftItem
@@ -530,6 +561,7 @@ namespace Event
 
 				return func(a_event, a_refr, a_loc, a_form);
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -563,36 +595,14 @@ namespace Event
 					GameEventHolder::GetSingleton()->objectPoisoned.QueueEvent(object, a_poison, a_count);
 				}
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
 		void Install()
 		{
 			REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(15786, 16024) };
-
-			struct Patch : Xbyak::CodeGenerator
-			{
-				Patch(std::uintptr_t a_originalFuncAddr, std::size_t a_originalByteLength)
-				{
-					// Hook returns here. Execute the restored bytes and jump back to the original function.
-					for (size_t i = 0; i < a_originalByteLength; i++)
-						db(*reinterpret_cast<uint8_t*>(a_originalFuncAddr + i));
-
-					jmp(qword[rip]);
-					dq(a_originalFuncAddr + a_originalByteLength);
-				}
-			};
-
-			Patch p(target.address(), 5);
-			p.ready();
-
-			auto& trampoline = SKSE::GetTrampoline();
-			trampoline.write_branch<5>(target.address(), PoisonObject::thunk);
-
-			auto alloc = trampoline.allocate(p.getSize());
-			memcpy(alloc, p.getCode(), p.getSize());
-
-			PoisonObject::func = reinterpret_cast<std::uintptr_t>(alloc);
+			stl::hook_function_prologue<PoisonObject, 5>(target.address());
 
 			logger::info("Hooked Poison Object"sv);
 		}
@@ -622,19 +632,20 @@ namespace Event
 
 							root->UpdateRigidConstraints(false);
 
-							std::uint32_t filterInfo = 0;
+							RE::CFilter filterInfo;
 							charController->GetCollisionFilterInfo(filterInfo);
 
-							root->SetCollisionLayerAndGroup(RE::COL_LAYER::kDeadBip, filterInfo >> 16);
+							root->SetCollisionLayerAndGroup(RE::COL_LAYER::kDeadBip, filterInfo.GetSystemGroup());
 						}
 					}
 
 					const auto caster = a_this->caster.get();
 					if (caster) {
-						GameEventHolder::GetSingleton()->actorReanimateStart.QueueEvent(zombie, zombie, caster.get());
+						GameEventHolder::GetSingleton()->actorReanimateStart.QueueEvent(zombie, caster.get());
 					}
 				}
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -646,11 +657,12 @@ namespace Event
 				const auto caster = a_this->caster.get();
 				if (zombiePtr && caster) {
 					const auto zombie = zombiePtr.get();
-					GameEventHolder::GetSingleton()->actorReanimateStop.QueueEvent(zombie, zombie, caster.get());
+					GameEventHolder::GetSingleton()->actorReanimateStop.QueueEvent(zombie, caster.get());
 				}
 
 				func(a_this);
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -672,8 +684,9 @@ namespace Event
 			{
 				func(a_this, a_resetInventory, a_attach3D);
 
-				GameEventHolder::GetSingleton()->actorResurrect.QueueEvent(a_this, a_this, a_resetInventory);
+				GameEventHolder::GetSingleton()->actorResurrect.QueueEvent(a_this, a_resetInventory);
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -708,6 +721,7 @@ namespace Event
 
 				func(a_region, a_currentWeather);
 			}
+
 			static inline REL::Relocation<decltype(thunk)> func;
 
 		private:

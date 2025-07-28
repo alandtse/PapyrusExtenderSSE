@@ -16,13 +16,14 @@ namespace Event
 			kObjectGrab = 'GRAB',
 			kObjectRelease = 'RELS',
 			kFurnitureEnter = 'FETR',
-			kFurnitureExit = 'FEXT',
+			kFurnitureExit = 'FEXT'
 		};
 
 		void Save(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version);
 		void Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_type);
 		void Revert(SKSE::SerializationInterface* a_intfc);
 		void FormDelete(RE::VMHandle a_handle);
+		void FormDelete(RE::FormID a_formID);
 
 		// members
 		SKSE::RegistrationSet<const RE::TESObjectCELL*> cellFullyLoaded{ "OnCellFullyLoaded"sv };
@@ -209,6 +210,7 @@ namespace Event
 		struct MagicEffectApply
 		{
 			MagicEffectApply() = default;
+
 			MagicEffectApply(RE::TESForm* a_effectFilter) :
 				effectID(a_effectFilter ? a_effectFilter->GetFormID() : 0)
 			{}
@@ -228,6 +230,7 @@ namespace Event
 		struct Hit
 		{
 			Hit() = default;
+
 			Hit(RE::TESForm* a_aggressor, RE::TESForm* a_source, RE::TESForm* a_projectile, std::int32_t powerAttack, std::int32_t sneakAttack, std::int32_t bashAttack, std::int32_t blockAttack) :
 				aggressorID(a_aggressor ? a_aggressor->GetFormID() : 0),
 				sourceID(a_source ? a_source->GetFormID() : 0),
@@ -279,7 +282,8 @@ namespace Event
 			kHit = 'OHIT',
 			kWeaponHit = 'WHIT',
 			kMagicHit = 'MHIT',
-			kProjectileHit = 'PHIT'
+			kProjectileHit = 'PHIT',
+			kPoisonObject = 'POBJ'
 		};
 
 		void Save(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version);
@@ -289,13 +293,13 @@ namespace Event
 		void FormDelete(RE::FormID a_uniqueID);
 
 		// members
-		SKSE::RegistrationSetUnique<const RE::Actor*, float, float>     actorFallLongDistance{ "OnActorFallLongDistance"sv };
-		SKSE::RegistrationSetUnique<const RE::Actor*, bool>             actorResurrect{ "OnActorResurrected"sv };
-		SKSE::RegistrationSetUnique<const RE::Actor*, const RE::Actor*> actorReanimateStart{ "OnActorReanimateStart"sv };
-		SKSE::RegistrationSetUnique<const RE::Actor*, const RE::Actor*> actorReanimateStop{ "OnActorReanimateStop"sv };
-		SKSE::RegistrationSet<const RE::TESObjectBOOK*>                 booksRead{ "OnBookRead"sv };
-		SKSE::RegistrationSet<const RE::TESObjectREFR*>                 fastTravelPrompt{ "OnFastTravelPrompt"sv };
-		SKSE::RegistrationSet<const RE::TESObjectREFR*>                 fastTravelConfirmed{ "OnFastTravelConfirmed"sv };
+		SKSE::RegistrationSet<const RE::Actor*, float, float>     actorFallLongDistance{ "OnActorFallLongDistance"sv };
+		SKSE::RegistrationSet<const RE::Actor*, bool>             actorResurrect{ "OnActorResurrected"sv };
+		SKSE::RegistrationSet<const RE::Actor*, const RE::Actor*> actorReanimateStart{ "OnActorReanimateStart"sv };
+		SKSE::RegistrationSet<const RE::Actor*, const RE::Actor*> actorReanimateStop{ "OnActorReanimateStop"sv };
+		SKSE::RegistrationSet<const RE::TESObjectBOOK*>           booksRead{ "OnBookRead"sv };
+		SKSE::RegistrationSet<const RE::TESObjectREFR*>           fastTravelPrompt{ "OnFastTravelPrompt"sv };
+		SKSE::RegistrationSet<const RE::TESObjectREFR*>           fastTravelConfirmed{ "OnFastTravelConfirmed"sv };
 #ifdef SKYRIMVR
 		SKSE::RegistrationSet<float> fastTravelEnd{ "OnPlayerFastTravelEnd"sv };
 #endif

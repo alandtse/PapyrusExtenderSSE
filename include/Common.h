@@ -1,23 +1,29 @@
 #pragma once
 
-#include "Papyrus/Util/ConditionParser.h"
-#include "Papyrus/Util/Graphics.h"
-#include "Papyrus/Util/Script.h"
+using VM = RE::BSScript::Internal::VirtualMachine;
+using StackID = RE::VMStackID;
+using Severity = RE::BSScript::ErrorLogger::Severity;
 
 namespace stl
 {
-	using namespace SKSE::stl;
-
 	inline bool read_string(SKSE::SerializationInterface* a_intfc, std::string& a_str)
 	{
 		std::size_t size = 0;
 		if (!a_intfc->ReadRecordData(size)) {
 			return false;
 		}
-		a_str.reserve(size);
-		if (!a_intfc->ReadRecordData(a_str.data(), static_cast<std::uint32_t>(size))) {
+
+		char* buf = new char[size];
+
+		if (!a_intfc->ReadRecordData(buf, static_cast<std::uint32_t>(size))) {
+			delete[] buf;
 			return false;
 		}
+
+		buf[size - 1] = '\0';
+		a_str = buf;
+
+		delete[] buf;
 		return true;
 	}
 
@@ -35,34 +41,10 @@ namespace stl
 		}
 		return true;
 	}
-
-	template <class T>
-	void write_thunk_call(std::uintptr_t a_src)
-	{
-		auto& trampoline = SKSE::GetTrampoline();
-		T::func = trampoline.write_call<5>(a_src, T::thunk);
-	}
-
-	template <class F, std::size_t idx, class T>
-	void write_vfunc()
-	{
-		REL::Relocation<std::uintptr_t> vtbl{ F::VTABLE[0] };
-		T::func = vtbl.write_vfunc(idx, T::thunk);
-	}
-
-	template <typename First, typename... T>
-	[[nodiscard]] bool is_in(First&& first, T&&... t)
-	{
-		return ((first == t) || ...);
-	}
 }
 
 namespace Papyrus
 {
-	using VM = RE::BSScript::Internal::VirtualMachine;
-	using StackID = RE::VMStackID;
-	using Severity = RE::BSScript::ErrorLogger::Severity;
-
 	inline constexpr auto script = "PO3_SKSEFunctions"sv;
 
 #define BIND(a_method, ...) a_vm.RegisterFunction(#a_method##sv, script, a_method __VA_OPT__(, ) __VA_ARGS__)

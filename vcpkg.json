@@ -1,6 +1,6 @@
 {
   "name": "papyrusextender",
-  "version-string": "5.10.0",
+  "version-string": "6.1.0",
   "description": "Papyrus Function Library",
   "homepage": "https://github.com/powerof3/PapyrusExtenderSSE",
   "license": "MIT",
@@ -10,9 +10,10 @@
     "rsm-binary-io",
     "srell",
     "spdlog",
+    "unordered-dense",
     "xbyak"
   ],
-  "builtin-baseline": "cd1099f42a3c2ee28dc68e3db3f6f88658982736",
+  "builtin-baseline": "f2e1c41da38c71be74ef48684666991929b45418",
   "overrides": [
     {
       "name": "xbyak",

@@ -785,7 +785,7 @@ namespace CONDITION
 			data.f = string::to_num<float>(a_param);
 			break;
 		case PARAM_TYPE::kActorValue:
-			data.i = static_cast<std::int32_t>(RE::ActorValueList::GetSingleton()->LookupActorValueByName(a_param));
+			data.i = static_cast<std::int32_t>(RE::ActorValueList::GetSingleton()->LookupActorValueByName(a_param.c_str()));
 			break;
 		case RE::SCRIPT_PARAM_TYPE::kAxis:
 			{
@@ -1116,7 +1116,10 @@ namespace CONDITION
 		case PARAM_TYPE::kFloat:
 			return std::to_string(data.f);
 		case PARAM_TYPE::kActorValue:
-			return RE::ActorValueList::GetSingleton()->GetActorValue(static_cast<RE::ActorValue>(data.i))->enumName;
+			{
+				auto avInfo = RE::ActorValueList::GetSingleton()->GetActorValueInfo(static_cast<RE::ActorValue>(data.i));
+				return avInfo ? avInfo->enumName : "None"s;
+			}
 		case PARAM_TYPE::kAxis:
 			{
 				switch (data.i) {
@@ -1457,7 +1460,7 @@ namespace CONDITION
 
 			//condition
 			auto condObject = std::to_underlying(*condData.object);
-			if (auto condItemStr = map::get_value<std::string>(map::conditionObjs, condObject)) {
+			if (auto condItemStr = map::conditionObjs.find(condObject)) {
 				condition += *condItemStr;
 			} else {
 				condition += std::to_string(condObject);
@@ -1466,7 +1469,7 @@ namespace CONDITION
 
 			//functionID
 			auto funcID = std::to_underlying(*condData.functionData.function);
-			if (auto funcIDStr = map::get_value<std::string>(map::funcIDs, funcID)) {
+			if (auto funcIDStr = map::funcIDs.find(funcID)) {
 				condition += *funcIDStr;
 			} else {
 				condition += std::to_string(funcID);
@@ -1494,7 +1497,7 @@ namespace CONDITION
 
 			//opCode
 			auto opCode = std::to_underlying(condData.flags.opCode);
-			if (auto opCodeStr = map::get_value<std::string>(map::opCodes, opCode)) {
+			if (auto opCodeStr = map::opCodes.find(opCode)) {
 				condition += *opCodeStr;
 			} else {
 				condition += std::to_string(opCode);

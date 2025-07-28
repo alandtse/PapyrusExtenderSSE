@@ -23,7 +23,7 @@
 #include "Papyrus/Functions/Graphics.h"
 #include "Papyrus/Functions/Hazard.h"
 #include "Papyrus/Functions/Idle.h"
-#include "Papyrus/Functions/LeveledItem.h"
+#include "Papyrus/Functions/LeveledList.h"
 #include "Papyrus/Functions/Light.h"
 #include "Papyrus/Functions/Location.h"
 #include "Papyrus/Functions/MagicEffect.h"
@@ -32,6 +32,7 @@
 #include "Papyrus/Functions/Potion.h"
 #include "Papyrus/Functions/Projectile.h"
 #include "Papyrus/Functions/Quest.h"
+#include "Papyrus/Functions/Scene.h"
 #include "Papyrus/Functions/Scroll.h"
 #include "Papyrus/Functions/Sound.h"
 #include "Papyrus/Functions/Spell.h"
@@ -84,7 +85,7 @@ namespace Papyrus
 		Graphics::Bind(*a_vm);
 		Hazard::Bind(*a_vm);
 		Idle::Bind(*a_vm);
-		LeveledItem::Bind(*a_vm);
+		LeveledList::Bind(*a_vm);
 		Light::Bind(*a_vm);
 		Location::Bind(*a_vm);
 		MagicEffect::Bind(*a_vm);
@@ -93,6 +94,7 @@ namespace Papyrus
 		Potion::Bind(*a_vm);
 		Projectile::Bind(*a_vm);
 		Quest::Bind(*a_vm);
+		Scene::Bind(*a_vm);
 		Scroll::Bind(*a_vm);
 		Sound::Bind(*a_vm);
 		Spell::Bind(*a_vm);

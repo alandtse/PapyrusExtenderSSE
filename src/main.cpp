@@ -7,7 +7,7 @@ void OnInit(SKSE::MessagingInterface::Message* a_msg)
 	switch (a_msg->type) {
 	case SKSE::MessagingInterface::kPostPostLoad:
 		{
-			logger::info("{:*^30}", "API"sv);
+			logger::info("{:*^30}", "POSTLOAD API"sv);
 			DescriptionFrameworkAPI::GetDescriptionFrameworkInterface001();
 			logger::info("Description Framework installed: {}", g_DescriptionFrameworkInterface != nullptr);
 		}
@@ -15,7 +15,17 @@ void OnInit(SKSE::MessagingInterface::Message* a_msg)
 	case SKSE::MessagingInterface::kDataLoaded:
 		{
 			Game::Register();
-			Serialization::FormDeletion::EventHandler::Register();
+			Serialization::Manager::Register();
+		}
+		break;
+	case SKSE::MessagingInterface::kPostLoadGame:
+	case SKSE::MessagingInterface::kNewGame:
+		{
+			logger::info("{:*^30}", "POSTLOAD API"sv);
+			DismemberingFrameworkAPI::LoadAPI();
+			logger::info("Dismembering Framework installed: {} (version {})", DismemberingFrameworkAPI::g_API != nullptr, DismemberingFrameworkAPI::g_API ? DismemberingFrameworkAPI::g_API->GetVersion() : -1);
+			NGDecapitationsAPI::LoadAPI();
+			logger::info("Next Gen Decapitations installed: {} (version {})", NGDecapitationsAPI::g_API != nullptr, NGDecapitationsAPI::g_API ? NGDecapitationsAPI::g_API->GetVersion() : -1);
 		}
 		break;
 	default:
@@ -31,7 +41,7 @@ extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
 	v.AuthorName("powerofthree");
 	v.UsesAddressLibrary();
 	v.UsesUpdatedStructs();
-	v.CompatibleVersions({ SKSE::RUNTIME_LATEST });
+	v.CompatibleVersions({ SKSE::RUNTIME_SSE_LATEST });
 
 	return v;
 }();
@@ -50,7 +60,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a
 	const auto ver = a_skse->RuntimeVersion();
 	if (ver
 #	ifndef SKYRIMVR
-		< SKSE::RUNTIME_1_5_39
+		< SKSE::RUNTIME_SSE_1_5_39
 #	else
 		> SKSE::RUNTIME_VR_1_4_15_1
 #	endif
@@ -92,7 +102,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 
 	SKSE::Init(a_skse, false);
 
-	SKSE::AllocTrampoline(256);
+	SKSE::AllocTrampoline(208);
 
 	const auto papyrus = SKSE::GetPapyrusInterface();
 	papyrus->Register(Papyrus::Bind);

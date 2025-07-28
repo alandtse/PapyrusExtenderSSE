@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 set(NAME "po3_PapyrusExtender" CACHE STRING "")
-set(VERSION 5.10.0 CACHE STRING "")
+set(VERSION 6.1.0 CACHE STRING "")
 set(VR_VERSION 1)
 set(AE_VERSION 1)
 
@@ -136,6 +136,7 @@ find_path(SRELL_INCLUDE_DIRS "srell.hpp")
 find_path(CLIB_UTIL_INCLUDE_DIRS "ClibUtil/utils.hpp")
 
 find_package(frozen CONFIG REQUIRED)
+find_package(unordered_dense CONFIG REQUIRED)
 
 # ---- Add source files ----
 
@@ -196,6 +197,7 @@ target_link_libraries(
 	PRIVATE
 		${CommonLibName}::${CommonLibName}
 		frozen::frozen
+		unordered_dense::unordered_dense
 )
 
 target_precompile_headers(

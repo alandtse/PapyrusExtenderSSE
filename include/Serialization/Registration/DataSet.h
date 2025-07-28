@@ -4,30 +4,24 @@ template <class D>
 class DataSetPair
 {
 public:
-	DataSetPair() :
-		_pair(),
-		_lock()
+	DataSetPair() = default;
+	~DataSetPair() = default;
+
+	DataSetPair(const DataSetPair& a_rhs)
 	{
-	}
-	DataSetPair(const DataSetPair& a_rhs) :
-		_pair(),
-		_lock()
-	{
-		a_rhs._lock.lock();
-		_pair = a_rhs._pair;
-		a_rhs._lock.unlock();
-	}
-	DataSetPair(DataSetPair&& a_rhs) noexcept :
-		_pair(),
-		_lock()
-	{
-		Locker locker(a_rhs._lock);
-		_pair = std::move(a_rhs._pair);
-		a_rhs._pair.first.clear();
-		a_rhs._pair.second.clear();
+		Locker lock(a_rhs._lock);
+		_addSet = a_rhs._addSet;
+		_removeSet = a_rhs._removeSet;
 	}
 
-	~DataSetPair() = default;
+	DataSetPair(DataSetPair&& a_rhs) noexcept
+	{
+		Locker lock(a_rhs._lock);
+		_addSet = std::move(a_rhs._addSet);
+		_removeSet = std::move(a_rhs._removeSet);
+		a_rhs._addSet.clear();
+		a_rhs._removeSet.clear();
+	}
 
 	DataSetPair& operator=(const DataSetPair& a_rhs)
 	{
@@ -36,16 +30,14 @@ public:
 		}
 
 		Locker lhsLocker(_lock);
-		_pair.first.clear();
-		_pair.second.clear();
+		Locker rhsLocker(a_rhs._lock);
 
-		{
-			Locker rhsLocker(a_rhs._lock);
-			_pair = a_rhs._pair;
-		}
+		_addSet = a_rhs._addSet;
+		_removeSet = a_rhs._removeSet;
 
 		return *this;
 	}
+
 	DataSetPair& operator=(DataSetPair&& a_rhs) noexcept
 	{
 		if (this == &a_rhs) {
@@ -55,35 +47,45 @@ public:
 		Locker lhsLocker(_lock);
 		Locker rhsLocker(a_rhs._lock);
 
-		_pair.first.clear();
-		_pair.second.clear();
-
-		_pair = std::move(a_rhs._pair);
-		a_rhs._pair.first.clear();
-		a_rhs._pair.second.clear();
+		_addSet = std::move(a_rhs._addSet);
+		_removeSet = std::move(a_rhs._removeSet);
+		a_rhs._addSet.clear();
+		a_rhs._removeSet.clear();
 
 		return *this;
 	}
 
-	std::set<D>& GetData(std::uint32_t a_index)
+	Set<D>& GetData(std::uint32_t a_index)
 	{
-		return a_index == 1 ? _pair.first :
-		                      _pair.second;
+		return a_index == 1 ? _addSet : _removeSet;
 	}
+
+	const Set<D>& GetData(std::uint32_t a_index) const
+	{
+		return a_index == 1 ? _addSet : _removeSet;
+	}
+
 	void Add(D a_data, std::uint32_t a_index)
 	{
 		Locker locker(_lock);
-
 		GetData(!a_index).erase(a_data);
 		GetData(a_index).insert(a_data);
 	}
+
+	void Remove(D a_data)
+	{
+		Locker locker(_lock);
+		_addSet.erase(a_data);
+		_removeSet.erase(a_data);
+	}
+
 	void Remove(D a_data, std::uint32_t a_index)
 	{
 		Locker locker(_lock);
-
 		GetData(a_index).erase(a_data);
 	}
-	bool Contains(D a_data, std::uint32_t a_index)
+
+	bool Contains(D a_data, std::uint32_t a_index) const
 	{
 		Locker locker(_lock);
 		return GetData(a_index).contains(a_data);
@@ -92,14 +94,16 @@ public:
 	void Clear()
 	{
 		Locker locker(_lock);
-		_pair.first.clear();
-		_pair.second.clear();
+		_addSet.clear();
+		_removeSet.clear();
 	}
+
 	void Clear(std::uint32_t a_index)
 	{
 		Locker locker(_lock);
 		GetData(a_index).clear();
 	}
+
 	void Revert(SKSE::SerializationInterface*)
 	{
 		Clear();
@@ -107,13 +111,11 @@ public:
 
 protected:
 	using Lock = std::recursive_mutex;
-	using Locker = std::lock_guard<Lock>;
+	using Locker = std::scoped_lock<Lock>;
 
-	std::pair<
-		std::set<D>,
-		std::set<D>>
-				 _pair;
-	mutable Lock _lock;
+	Set<D>       _addSet{};
+	Set<D>       _removeSet{};
+	mutable Lock _lock{};
 };
 
 template <class F>
@@ -133,35 +135,48 @@ public:
 
 	void Add(F* a_form, std::uint32_t a_index)
 	{
-		return DataSetPair::Add(a_form->GetFormID(), a_index);
+		DataSetPair::Add(a_form->GetFormID(), a_index);
 	}
+
 	void Remove(F* a_form, std::uint32_t a_index)
 	{
-		return DataSetPair::Remove(a_form->GetFormID(), a_index);
+		DataSetPair::Remove(a_form->GetFormID(), a_index);
 	}
+
 	void Remove(F* a_form)
 	{
-		return Remove(a_form->GetFormID());
+		DataSetPair::Remove(a_form->GetFormID());
 	}
-	bool Contains(F* a_form, std::uint32_t a_index)
+
+	void Remove(RE::FormID a_formID)
+	{
+		Locker locker(_lock);
+		_addSet.erase(a_formID);
+		_removeSet.erase(a_formID);
+	}
+
+	bool Contains(F* a_form, std::uint32_t a_index) const
 	{
 		return DataSetPair::Contains(a_form->GetFormID(), a_index);
 	}
 
-	bool Save(SKSE::SerializationInterface* a_intfc, std::uint32_t a_type, std::uint32_t a_version, std::uint32_t a_index)
+	bool Save(SKSE::SerializationInterface* a_intfc, std::uint32_t a_type, std::uint32_t a_version, std::uint32_t a_index) const
 	{
 		if (!a_intfc->OpenRecord(a_type, a_version)) {
 			logger::error("Failed to open serialization record!"sv);
 			return false;
 		}
+
 		return Save(a_intfc, a_index);
 	}
-	bool Save(SKSE::SerializationInterface* a_intfc, std::uint32_t a_index)
+
+	bool Save(SKSE::SerializationInterface* a_intfc, std::uint32_t a_index) const
 	{
 		assert(a_intfc);
 		Locker locker(_lock);
 
-		const auto&       formSet = GetData(a_index);
+		const auto& formSet = GetData(a_index);
+
 		const std::size_t numRegs = formSet.size();
 		if (!a_intfc->WriteRecordData(numRegs)) {
 			logger::error("Failed to save number of regs ({})", numRegs);
@@ -177,15 +192,18 @@ public:
 
 		return true;
 	}
+
 	bool Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_index)
 	{
 		assert(a_intfc);
-		std::size_t numRegs;
-		a_intfc->ReadRecordData(numRegs);
 
 		Locker locker(_lock);
-		auto&  formSet = GetData(a_index);
+
+		auto& formSet = GetData(a_index);
 		formSet.clear();
+
+		std::size_t numRegs;
+		a_intfc->ReadRecordData(numRegs);
 
 		RE::FormID formID;
 		for (std::size_t i = 0; i < numRegs; i++) {
@@ -197,14 +215,5 @@ public:
 		}
 
 		return true;
-	}
-
-	void Remove(RE::FormID a_formID)
-	{
-		Locker locker(_lock);
-
-		for (std::uint32_t i = 0; i < 2; i++) {
-			GetData(i).erase(a_formID);
-		}
 	}
 };

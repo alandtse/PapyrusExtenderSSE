@@ -78,6 +78,12 @@ namespace Event
 		furnitureEnter.Unregister(a_handle);
 		furnitureExit.Unregister(a_handle);
 	}
+
+	void ScriptEventHolder::FormDelete(RE::FormID a_uniqueID)
+	{
+		furnitureEnter.Unregister(a_uniqueID);
+		furnitureExit.Unregister(a_uniqueID);
+	}
 }
 
 namespace Event
@@ -96,6 +102,7 @@ namespace Event
 		soulsTrapped.Save(a_intfc, kSoulTrap, a_version);
 		spellsLearned.Save(a_intfc, kSpellLearned, a_version);
 	}
+
 	void StoryEventHolder::Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_type)
 	{
 		switch (a_type) {
@@ -133,6 +140,7 @@ namespace Event
 			break;
 		}
 	}
+
 	void StoryEventHolder::Revert(SKSE::SerializationInterface* a_intfc)
 	{
 		actorKill.Revert(a_intfc);
@@ -147,6 +155,7 @@ namespace Event
 		soulsTrapped.Revert(a_intfc);
 		spellsLearned.Revert(a_intfc);
 	}
+
 	void StoryEventHolder::FormDelete(RE::VMHandle a_handle)
 	{
 		actorKill.Unregister(a_handle);
@@ -169,10 +178,12 @@ namespace Event::Filter
 	{
 		return stl::read_formID(a_intfc, effectID);
 	}
+
 	bool MagicEffectApply::Save(SKSE::SerializationInterface* a_intfc) const
 	{
 		return a_intfc->WriteRecordData(effectID);
 	}
+
 	bool MagicEffectApply::PassesFilter(RE::EffectSetting* a_baseEffect) const
 	{
 		return detail::passes_simple_filter(a_baseEffect, RE::TESForm::LookupByID(effectID));
@@ -188,6 +199,7 @@ namespace Event::Filter
 		}
 		return true;
 	}
+
 	bool Hit::Save(SKSE::SerializationInterface* a_intfc) const
 	{
 		if (!a_intfc->WriteRecordData(aggressorID) || !a_intfc->WriteRecordData(sourceID) || !a_intfc->WriteRecordData(projectileID)) {
@@ -198,6 +210,7 @@ namespace Event::Filter
 		}
 		return true;
 	}
+
 	bool Hit::PassesFilter(RE::TESObjectREFR* a_aggressor, RE::TESForm* a_source, RE::BGSProjectile* a_projectile, bool a_powerAttack, bool a_sneakAttack, bool a_bashAttack, bool a_blockAttack) const
 	{
 		bool result = true;
@@ -249,6 +262,7 @@ namespace Event
 		projectileHit.Save(a_intfc, kProjectileHit, a_version);
 		weaponHit.Save(a_intfc, kWeaponHit, a_version);
 		weatherChange.Save(a_intfc, kWeatherChange, a_version);
+		objectPoisoned.Save(a_intfc, kPoisonObject, a_version);
 	}
 
 	void GameEventHolder::Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_type)
@@ -301,6 +315,9 @@ namespace Event
 		case kWeatherChange:
 			weatherChange.Load(a_intfc);
 			break;
+		case kPoisonObject:
+			objectPoisoned.Load(a_intfc);
+			break;
 		default:
 			break;
 		}
@@ -325,6 +342,7 @@ namespace Event
 		projectileHit.Revert(a_intfc);
 		weaponHit.Revert(a_intfc);
 		weatherChange.Revert(a_intfc);
+		objectPoisoned.Revert(a_intfc);
 	}
 
 	void GameEventHolder::FormDelete(RE::VMHandle a_handle)
@@ -346,19 +364,11 @@ namespace Event
 		projectileHit.Unregister(a_handle);
 		weaponHit.Unregister(a_handle);
 		weatherChange.Unregister(a_handle);
+		objectPoisoned.Unregister(a_handle);
 	}
 
 	void GameEventHolder::FormDelete(RE::FormID a_uniqueID)
 	{
-		actorFallLongDistance.Unregister(a_uniqueID);
-		actorReanimateStart.Unregister(a_uniqueID);
-		actorReanimateStop.Unregister(a_uniqueID);
-		actorResurrect.Unregister(a_uniqueID);
-		fastTravelConfirmed.Unregister(a_uniqueID);
-		fastTravelPrompt.Unregister(a_uniqueID);
-#ifdef SKYRIMVR
-		fastTravelEnd.Unregister(a_uniqueID);
-#endif
 		magicApply.UnregisterAll(a_uniqueID);
 		magicHit.Unregister(a_uniqueID);
 		onHit.UnregisterAll(a_uniqueID);
