@@ -621,7 +621,7 @@ namespace Papyrus::Actor
 		}
 
 		RE::NiPointer<RE::Actor> rider;
-		if (a_actor->GetRider(rider)) {
+		if (a_actor->GetMountedBy(rider)) {
 			return rider.get();
 		}
 
