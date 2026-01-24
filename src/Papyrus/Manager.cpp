@@ -104,6 +104,9 @@ namespace Papyrus
 		VisualEffect::Bind(*a_vm);
 		Weather::Bind(*a_vm);
 
+		logger::info("Total number of functions : {}"sv, numFunctionsRegistered);
+		logger::info("Total number of event functions : {}"sv, numEventFunctionsRegistered);
+
 		return true;
 	}
 }

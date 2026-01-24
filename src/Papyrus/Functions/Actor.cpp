@@ -1,6 +1,7 @@
 #include "Papyrus/Functions/Actor.h"
 
 #include "Papyrus/Util/Inventory.h"
+#include "Papyrus/Util/Magic.h"
 #include "Serialization/Manager.h"
 
 namespace Papyrus::Actor
@@ -53,21 +54,13 @@ namespace Papyrus::Actor
 
 		if (!a_actor) {
 			a_vm->TraceStack("Actor is None", a_stackID);
-			return result;
+			return {};
 		}
 
-		auto inv = a_actor->GetInventory();
-		for (const auto& [item, data] : inv) {
-			if (item->Is(RE::FormType::LeveledItem)) {
-				continue;
-			}
-			const auto& [count, entry] = data;
-			if (count > 0 && entry->IsWorn()) {
-				result.push_back(item);
-			}
-		}
-
-		return result;
+		return INV::collect_items_array(a_actor, false, false, false,
+			[](RE::TESForm*, RE::InventoryEntryData* a_entry) {
+				return a_entry->IsWorn();
+			});
 	}
 
 	std::vector<RE::TESForm*> AddAllEquippedItemsBySlotToArray(STATIC_ARGS, RE::Actor* a_actor, std::vector<std::uint32_t> a_slots)
@@ -425,6 +418,46 @@ namespace Papyrus::Actor
 		return nullptr;
 	}
 
+	float GetEditorLocationX(STATIC_ARGS, RE::Actor* a_actor)
+	{
+		if (!a_actor) {
+			a_vm->TraceStack("Actor is None", a_stackID);
+			return 0.0f;
+		}
+
+		return a_actor->editorLocCoord.x;
+	}
+
+	float GetEditorLocationY(STATIC_ARGS, RE::Actor* a_actor)
+	{
+		if (!a_actor) {
+			a_vm->TraceStack("Actor is None", a_stackID);
+			return 0.0f;
+		}
+
+		return a_actor->editorLocCoord.y;
+	}
+
+	float GetEditorLocationZ(STATIC_ARGS, RE::Actor* a_actor)
+	{
+		if (!a_actor) {
+			a_vm->TraceStack("Actor is None", a_stackID);
+			return 0.0f;
+		}
+
+		return a_actor->editorLocCoord.z;
+	}
+
+	float GetEditorLocationAngle(STATIC_ARGS, RE::Actor* a_actor)
+	{
+		if (!a_actor) {
+			a_vm->TraceStack("Actor is None", a_stackID);
+			return 0.0f;
+		}
+
+		return a_actor->editorLocRot;
+	}
+
 	RE::TESAmmo* GetEquippedAmmo(STATIC_ARGS, const RE::Actor* a_actor)
 	{
 		if (!a_actor) {
@@ -663,19 +696,21 @@ namespace Papyrus::Actor
 		}
 #ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
-#else
-		const auto activeEffects = new std::vector<RE::ActiveEffect*>;
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
-			if (ae)
-				activeEffects->push_back(ae);
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-		if (activeEffects) {
-#endif
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				return ae && ae->effect && ae->effect->baseEffect == a_mgef && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
 			});
 		}
+#else
+		std::vector<RE::ActiveEffect*> activeEffects;
+		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
+			if (ae)
+				activeEffects.push_back(ae);
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+		return std::ranges::any_of(activeEffects, [&](auto const& ae) {
+			return ae && ae->effect && ae->effect->baseEffect == a_mgef && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
+		});
+#endif
 		return false;
 	}
 
@@ -693,19 +728,21 @@ namespace Papyrus::Actor
 		}
 #ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
-#else
-		const auto activeEffects = new std::vector<RE::ActiveEffect*>;
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
-			if (ae)
-				activeEffects->push_back(ae);
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-		if (activeEffects) {
-#endif
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				return ae && ae->spell == a_spell && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
 			});
 		}
+#else
+		std::vector<RE::ActiveEffect*> activeEffects;
+		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
+			if (ae)
+				activeEffects.push_back(ae);
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+		return std::ranges::any_of(activeEffects, [&](auto const& ae) {
+			return ae && ae->spell == a_spell && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
+		});
+#endif
 		return false;
 	}
 
@@ -732,19 +769,22 @@ namespace Papyrus::Actor
 		}
 #ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
-#else
-		const auto activeEffects = new std::vector<RE::ActiveEffect*>;
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
-			activeEffects->push_back(ae);
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-		if (activeEffects) {
-#endif
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				const auto mgef = ae ? ae->GetBaseObject() : nullptr;
 				return mgef && RE::EffectArchetypeToString(mgef->GetArchetype()) == a_archetype;
 			});
 		}
+#else
+		std::vector<RE::ActiveEffect*> activeEffects;
+		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
+			activeEffects.push_back(ae);
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+		return std::ranges::any_of(activeEffects, [&](auto const& ae) {
+			const auto mgef = ae ? ae->GetBaseObject() : nullptr;
+			return mgef && RE::EffectArchetypeToString(mgef->GetArchetype()) == a_archetype;
+		});
+#endif
 		return false;
 	}
 
@@ -915,9 +955,9 @@ namespace Papyrus::Actor
 
 					float tiltUpAngle;
 					if (a_ammo->IsBolt()) {
-						tiltUpAngle = RE::INISettingCollection::GetSingleton()->GetSetting("f1PBoltTiltUpAngle:Combat")->GetFloat();
+						tiltUpAngle = "f1PBoltTiltUpAngle:Combat"_ini.value();
 					} else {
-						tiltUpAngle = RE::INISettingCollection::GetSingleton()->GetSetting(RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? "f1PArrowTiltUpAngle:Combat" : "f3PArrowTiltUpAngle:Combat")->GetFloat();
+						tiltUpAngle = RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? "f1PArrowTiltUpAngle:Combat"_ini.value() : "f3PArrowTiltUpAngle:Combat"_ini.value();
 					}
 					angles.x = a_actor->GetAngleX() - (RE::deg_to_rad(tiltUpAngle));
 
@@ -1265,6 +1305,8 @@ namespace Papyrus::Actor
 
 	void Bind(VM& a_vm)
 	{
+		std::uint32_t count = 0;
+
 		BIND(AddBasePerk);
 		BIND(AddBaseSpell);
 		BIND(AddAllEquippedItemsToArray);
@@ -1286,6 +1328,10 @@ namespace Papyrus::Actor
 		BIND(GetCombatTargets);
 		BIND(GetCommandedActors);
 		BIND(GetCommandingActor);
+		BIND(GetEditorLocationX);
+		BIND(GetEditorLocationY);
+		BIND(GetEditorLocationZ);
+		BIND(GetEditorLocationAngle);
 		BIND(GetEquippedAmmo);
 		//SeaSparrow - New Binds
 		BIND(GetEquippedAmmoEnchantment);
@@ -1331,6 +1377,6 @@ namespace Papyrus::Actor
 		BIND(SetSoulTrapped);
 		BIND(UnequipAllOfType);
 
-		logger::info("Registered actor functions"sv);
+		logger::info("Registered {} actor functions"sv, count);
 	}
 }

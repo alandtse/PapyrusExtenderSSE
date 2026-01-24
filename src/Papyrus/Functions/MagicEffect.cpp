@@ -1,5 +1,7 @@
 #include "Papyrus/Functions/MagicEffect.h"
 
+#include "Papyrus/Util/Magic.h"
+
 namespace Papyrus::MagicEffect
 {
 	RE::TESForm* GetAssociatedForm(STATIC_ARGS, const RE::EffectSetting* a_mgef)
@@ -115,6 +117,8 @@ namespace Papyrus::MagicEffect
 
 	void Bind(VM& a_vm)
 	{
+		std::uint32_t count = 0;
+
 		BIND(GetAssociatedForm, true);
 		BIND(GetEffectArchetypeAsInt, true);
 		BIND(GetEffectArchetypeAsString, true);
@@ -124,6 +128,6 @@ namespace Papyrus::MagicEffect
 		BIND(SetAssociatedForm);
 		BIND(SetMagicEffectSound);
 
-		logger::info("Registered magiceffect functions"sv);
+		logger::info("Registered {} magiceffect functions"sv, count);
 	}
 }
