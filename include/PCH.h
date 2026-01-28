@@ -1,10 +1,14 @@
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN
+#ifndef SKYRIMVR
+#	define NOWINMESSAGES
+#	define NOUSER
+#	define NOMSG
+#endif
 
 #define NOGDICAPMASKS
 #define NOVIRTUALKEYCODES
-#define NOWINMESSAGES
 #define NOWINSTYLES
 #define NOSYSMETRICS
 #define NOMENUS
@@ -21,13 +25,11 @@
 #define NODRAWTEXT
 #define NOGDI
 #define NOKERNEL
-#define NOUSER
 #define NONLS
 #define NOMB
 #define NOMEMMGR
 #define NOMETAFILE
 #define NOMINMAX
-#define NOMSG
 #define NOOPENFILE
 #define NOSCROLL
 #define NOSERVICE
