@@ -207,7 +207,6 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Actor is None", a_stackID);
 			return result;
 		}
-#ifndef SKYRIMVR
 		const auto activeEffects = a_actor->GetActiveEffectList();
 		if (!activeEffects) {
 			a_vm->TraceForm(a_actor, "has no active effects", a_stackID, Severity::kInfo);
@@ -222,17 +221,6 @@ namespace Papyrus::Actor
 				result.push_back(mgef);
 			}
 		}
-#else
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
-			if (auto mgef = activeEffect ? activeEffect->GetBaseObject() : nullptr; mgef) {
-				if (!a_inactive && (activeEffect->flags.all(AE::kInactive) || activeEffect->flags.all(AE::kDispelled))) {
-					return RE::BSContainer::ForEachResult::kContinue;
-				}
-				result.push_back(mgef);
-			}
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-#endif
 
 		return result;
 	}
@@ -694,23 +682,11 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Magic Effect is None", a_stackID);
 			return false;
 		}
-#ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				return ae && ae->effect && ae->effect->baseEffect == a_mgef && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
 			});
 		}
-#else
-		std::vector<RE::ActiveEffect*> activeEffects;
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
-			if (ae)
-				activeEffects.push_back(ae);
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-		return std::ranges::any_of(activeEffects, [&](auto const& ae) {
-			return ae && ae->effect && ae->effect->baseEffect == a_mgef && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
-		});
-#endif
 		return false;
 	}
 
@@ -726,23 +702,11 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Spell is None", a_stackID);
 			return false;
 		}
-#ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				return ae && ae->spell == a_spell && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
 			});
 		}
-#else
-		std::vector<RE::ActiveEffect*> activeEffects;
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
-			if (ae)
-				activeEffects.push_back(ae);
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-		return std::ranges::any_of(activeEffects, [&](auto const& ae) {
-			return ae && ae->spell == a_spell && ae->flags.none(AE::kInactive) && ae->flags.none(AE::kDispelled);
-		});
-#endif
 		return false;
 	}
 
@@ -767,24 +731,12 @@ namespace Papyrus::Actor
 			a_vm->TraceStack("Archetype is None", a_stackID);
 			return false;
 		}
-#ifndef SKYRIMVR
 		if (const auto activeEffects = a_actor->GetActiveEffectList(); activeEffects) {
 			return std::ranges::any_of(*activeEffects, [&](auto const& ae) {
 				const auto mgef = ae ? ae->GetBaseObject() : nullptr;
 				return mgef && RE::EffectArchetypeToString(mgef->GetArchetype()) == a_archetype;
 			});
 		}
-#else
-		std::vector<RE::ActiveEffect*> activeEffects;
-		a_actor->VisitActiveEffects([&](RE::ActiveEffect* ae) -> RE::BSContainer::ForEachResult {
-			activeEffects.push_back(ae);
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-		return std::ranges::any_of(activeEffects, [&](auto const& ae) {
-			const auto mgef = ae ? ae->GetBaseObject() : nullptr;
-			return mgef && RE::EffectArchetypeToString(mgef->GetArchetype()) == a_archetype;
-		});
-#endif
 		return false;
 	}
 
@@ -1134,7 +1086,6 @@ namespace Papyrus::Actor
 		const auto actorEffects = actorbase ? actorbase->GetSpellList() : nullptr;
 
 		if (actorEffects && actorEffects->GetIndex(a_spell)) {
-#ifndef SKYRIMVR
 			if (const auto activeEffects = a_actor->GetActiveEffectList()) {
 				for (const auto& activeEffect : *activeEffects) {
 					if (activeEffect && activeEffect->spell == a_spell) {
@@ -1142,14 +1093,6 @@ namespace Papyrus::Actor
 					}
 				}
 			}
-#else
-			a_actor->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
-				if (activeEffect && activeEffect->spell == a_spell) {
-					activeEffect->Dispel(true);
-				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-#endif
 			const auto combatController = a_actor->combatController;
 			if (combatController && combatController->inventory) {
 				combatController->inventory->dirty = true;

@@ -366,7 +366,6 @@ namespace Papyrus::ObjectReference
 		}
 
 		const auto magicTarget = a_ref->GetMagicTarget();
-#ifndef SKYRIMVR
 		const auto activeEffects = magicTarget ? magicTarget->GetActiveEffectList() : nullptr;
 
 		if (activeEffects) {
@@ -377,17 +376,6 @@ namespace Papyrus::ObjectReference
 				}
 			}
 		}
-#else
-		if (magicTarget) {
-			magicTarget->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
-				const auto mgef = activeEffect ? activeEffect->GetBaseObject() : nullptr;
-				if (mgef && mgef == a_mgef) {
-					result.push_back(activeEffect);
-				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-		}
-#endif
 
 		return result;
 	}
@@ -673,7 +661,6 @@ namespace Papyrus::ObjectReference
 		}
 
 		const auto magicTarget = a_ref->GetMagicTarget();
-#ifndef SKYRIMVR
 		const auto activeEffects = magicTarget ? magicTarget->GetActiveEffectList() : nullptr;
 
 		if (activeEffects) {
@@ -686,19 +673,6 @@ namespace Papyrus::ObjectReference
 				}
 			}
 		}
-#else
-		if (magicTarget) {
-			magicTarget->VisitActiveEffects([&](RE::ActiveEffect* activeEffect) -> RE::BSContainer::ForEachResult {
-				const auto mgef = activeEffect ? activeEffect->GetBaseObject() : nullptr;
-				if (mgef && mgef == a_mgef) {
-					result.push_back(activeEffect->spell);
-					const auto caster = activeEffect->caster.get();
-					result.push_back(caster.get());
-				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-		}
-#endif
 
 		return result;
 	}
