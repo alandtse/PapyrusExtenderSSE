@@ -142,15 +142,17 @@ jobs:
         run: |
           set -euo pipefail
           ver="${{ needs.verify.outputs.nexus_version }}"
-          # Hyphenated archive name (no spaces) for safe handling downstream; the Nexus
-          # display name is set separately via mod_filename.
-          stage="Papyrus-Extender-VR-${ver}"
-          mkdir -p "$stage/SKSE/Plugins"
-          cp bin/po3_PapyrusExtender.dll bin/po3_PapyrusExtender.pdb "$stage/SKSE/Plugins/"
+          # Archive name (for the release asset) is separate from its internal layout;
+          # the Nexus display name is set separately via mod_filename.
+          archive_name="Papyrus-Extender-VR-${ver}"
+          # Root the archive at Data/ (not a version-named wrapper folder) so it drops
+          # straight into a Skyrim install or Vortex/NMM's data folder with no digging.
+          mkdir -p package/Data/SKSE/Plugins
+          cp bin/po3_PapyrusExtender.dll bin/po3_PapyrusExtender.pdb package/Data/SKSE/Plugins/
           sudo apt-get update && sudo apt-get install -y p7zip-full
-          7z a -t7z -mx=9 "${stage}.7z" "$stage"
-          echo "archive=${stage}.7z" >> "$GITHUB_OUTPUT"
-          7z l "${stage}.7z"
+          7z a -t7z -mx=9 "${archive_name}.7z" ./package/Data
+          echo "archive=${archive_name}.7z" >> "$GITHUB_OUTPUT"
+          7z l "${archive_name}.7z"
 
       - name: Create release and attach archive
         env:
