@@ -120,11 +120,19 @@ jobs:
             echo "::error::nexus_mod_id is required for a real upload." >&2
             exit 1
           fi
-          # Nexus version defaults to the tag without 'v'; callers may override. Strip the
-          # trailing VR base `.0` so manual dispatches (no mod_version) also show the
-          # 3-part upstream version, matching the release pipeline.
-          VERSION="${INPUT_MOD_VERSION:-${TAG#v}}"
-          VERSION="${VERSION%.0}"
+          # An explicitly supplied mod_version (e.g. from vr-pack.yml's verify job) is
+          # already the final display version — use it as-is. Only when deriving from
+          # the raw tag (manual dispatch with no mod_version) do we strip the trailing
+          # VR base `.0`, so that fallback also shows the 3-part upstream version. Do
+          # NOT strip an explicitly supplied version too: it may legitimately end in
+          # `.0` as its own patch number (e.g. "6.4.0"), and stripping it twice drops
+          # a real version digit.
+          if [ -n "$INPUT_MOD_VERSION" ]; then
+            VERSION="$INPUT_MOD_VERSION"
+          else
+            VERSION="${TAG#v}"
+            VERSION="${VERSION%.0}"
+          fi
           {
             echo "tag=$TAG"
             echo "version=$VERSION"
