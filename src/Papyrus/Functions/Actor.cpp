@@ -994,7 +994,7 @@ namespace Papyrus::Actor
 			}
 			if (sound) {
 				RE::BSSoundHandle soundHandle;
-				RE::BSAudioManager::GetSingleton()->BuildSoundDataFromDescriptor(soundHandle, sound, flags);
+				RE::BSAudioManager::GetSingleton()->GetSoundHandleByName(soundHandle, sound->GetFormEditorID(), flags);
 				soundHandle.SetPosition(origin);
 				soundHandle.Play();
 			}

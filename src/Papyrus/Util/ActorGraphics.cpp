@@ -6,12 +6,16 @@ namespace GRAPHICS
 	{
 		void sanitize_path(std::string& a_path)
 		{
+			static const srell::regex slashPattern("/+|\\\\+");
+			static const srell::regex leadingSlashPattern("^\\\\+");
+			static const srell::regex texturesPattern(R"(.*?[^\s]textures\\|^textures\\)", srell::regex::icase);
+
 			std::ranges::transform(a_path, a_path.begin(),
 				[](char c) { return static_cast<char>(std::tolower(c)); });
 
-			a_path = srell::regex_replace(a_path, srell::regex("/+|\\\\+"), "\\");
-			a_path = srell::regex_replace(a_path, srell::regex("^\\\\+"), "");
-			a_path = srell::regex_replace(a_path, srell::regex(R"(.*?[^\s]textures\\|^textures\\)", srell::regex::icase), "");
+			a_path = srell::regex_replace(a_path, slashPattern, "\\");
+			a_path = srell::regex_replace(a_path, leadingSlashPattern, "");
+			a_path = srell::regex_replace(a_path, texturesPattern, "");
 		}
 
 		RE::BSShaderTextureSet* create_textureset(char** a_value)
@@ -60,14 +64,14 @@ namespace GRAPHICS
 			if (const auto parent = a_geometry->parent; parent && parent->AsFadeNode() && noWeapons && isActor) {
 				return RE::BSVisit::BSVisitControl::kContinue;
 			}
-			if (const auto alpha = a_geometry->properties[States::kProperty]; alpha && noAlphaMeshes) {
+			if (const auto alpha = a_geometry->alphaProperty; alpha && noAlphaMeshes) {
 				return RE::BSVisit::BSVisitControl::kContinue;
 			}
 
-			const auto& effect = a_geometry->properties[States::kEffect];
+			const auto& effect = a_geometry->shaderProperty;
 			const auto  lightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(effect.get());
 
-			const auto& tempEffect = a_templateGeo->properties[States::kEffect];
+			const auto& tempEffect = a_templateGeo->shaderProperty;
 			const auto  tempLightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(tempEffect.get());
 
 			if (lightingShader && tempLightingShader) {
@@ -236,7 +240,7 @@ namespace GRAPHICS
 	void ActorApplier::ArmorTXST(RE::NiAVObject* a_object, RE::BGSTextureSet* a_txst, std::int32_t a_type, std::string_view a_tgtPath, bool& replaced)
 	{
 		RE::BSVisit::TraverseScenegraphGeometries(a_object, [&](RE::BSGeometry* a_geometry) -> RE::BSVisit::BSVisitControl {
-			const auto effect = a_geometry->properties[RE::BSGeometry::States::kEffect];
+			const auto effect = a_geometry->shaderProperty;
 			const auto lightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(effect.get());
 
 			const auto material = lightingShader ? static_cast<MaterialBase*>(lightingShader->material) : nullptr;
@@ -290,7 +294,7 @@ namespace GRAPHICS
 	void ActorApplier::SkinTXST(RE::NiAVObject* a_object, RE::BGSTextureSet* a_txst, std::vector<RE::BSFixedString>& a_vec, std::int32_t a_type)
 	{
 		RE::BSVisit::TraverseScenegraphGeometries(a_object, [&](RE::BSGeometry* a_geometry) -> RE::BSVisit::BSVisitControl {
-			const auto effect = a_geometry->properties[RE::BSGeometry::States::kEffect];
+			const auto effect = a_geometry->shaderProperty;
 			const auto lightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(effect.get());
 
 			const auto material = lightingShader ? static_cast<MaterialBase*>(lightingShader->material) : nullptr;
@@ -384,7 +388,7 @@ namespace GRAPHICS
 		const auto geometry = object ? object->AsGeometry() : nullptr;
 
 		if (geometry) {
-			const auto& effect = geometry->properties[States::kEffect];
+			const auto& effect = geometry->shaderProperty;
 			const auto  lightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(effect.get());
 			if (lightingShader) {
 				const auto material = static_cast<MaterialBase*>(lightingShader->material);
@@ -423,17 +427,17 @@ namespace GRAPHICS
 		}
 	}
 
-	ActorResetter::ActorResetter(RE::Actor* a_actor, RE::NiAVObject* a_object, const RE::BSFixedString& a_folderName) :
+	ActorResetter::ActorResetter(RE::Actor* a_actor, const RE::BSFixedString& a_folderName) :
 		actor(a_actor),
-		root(a_object),
+		root(a_actor ? a_actor->Get3D(false) : nullptr),
 		folderName(a_folderName)
 	{
-		if (!a_object || !a_object->extra || a_object->extraDataSize == 0) {
+		if (!root || !root->extra || root->extraDataSize == 0) {
 			hasData = false;
 			return;
 		}
 
-		std::span<RE::NiExtraData*> span(a_object->extra, a_object->extraDataSize);
+		std::span<RE::NiExtraData*> span(root->extra, root->extraDataSize);
 		for (const auto& extraData : span) {
 			if (!extraData) {
 				continue;
@@ -719,7 +723,7 @@ namespace GRAPHICS
 	void ActorResetter::reset_textureset(RE::NiAVObject* a_object, RE::BSShaderTextureSet* a_txst, bool a_doOnlySkin, const std::string& a_folder)
 	{
 		RE::BSVisit::TraverseScenegraphGeometries(a_object, [&](RE::BSGeometry* a_geometry) -> RE::BSVisit::BSVisitControl {
-			const auto& effect = a_geometry->properties[States::kEffect];
+			const auto& effect = a_geometry->shaderProperty;
 			const auto  lightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(effect.get());
 			if (lightingShader) {
 				const auto material = static_cast<MaterialBase*>(lightingShader->material);
@@ -764,7 +768,7 @@ namespace GRAPHICS
 				return RE::BSVisit::BSVisitControl::kContinue;
 			}
 
-			const auto& effect = a_geometry->properties[States::kEffect];
+			const auto& effect = a_geometry->shaderProperty;
 			const auto  lightingShader = netimmerse_cast<RE::BSLightingShaderProperty*>(effect.get());
 
 			if (lightingShader) {

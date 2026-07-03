@@ -4,7 +4,6 @@ namespace GRAPHICS
 {
 	using Feature = RE::BSShaderMaterial::Feature;
 	using HeadPartType = RE::BGSHeadPart::HeadPartType;
-	using States = RE::BSGeometry::States;
 	using Texture = RE::BSTextureSet::Texture;
 	using ShaderFlags = RE::BSShaderProperty::EShaderPropertyFlag;
 	using ShaderFlags8 = RE::BSShaderProperty::EShaderPropertyFlag8;
@@ -109,7 +108,7 @@ namespace GRAPHICS
 	struct ActorResetter
 	{
 		ActorResetter() = default;
-		ActorResetter(RE::Actor* a_actor, RE::NiAVObject* a_object, const RE::BSFixedString& a_folderName = {});
+		ActorResetter(RE::Actor* a_actor, const RE::BSFixedString& a_folderName = {});
 
 		bool ResetActor3D() const;
 
@@ -129,7 +128,7 @@ namespace GRAPHICS
 		void ResetMaterialShader() const;
 
 		// members
-		RE::NiPointer<RE::Actor>             actor{};
+		RE::ActorPtr                         actor{};
 		RE::NiPointer<RE::NiAVObject>        root{};
 		std::string                          folderName{};
 		RE::NiStringsExtraData*              toggle{};
