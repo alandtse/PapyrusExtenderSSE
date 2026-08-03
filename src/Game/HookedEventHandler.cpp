@@ -322,6 +322,15 @@ namespace Event
 
 	namespace FastTravel
 	{
+		RE::ObjectRefHandle& GetMapMarkerHandle(RE::MapMenu& a_mapMenu)
+		{
+#ifdef SKYRIMVR
+			return a_mapMenu.GetVRRuntimeData()->mapMarker;
+#else
+			return a_mapMenu.mapMarker;
+#endif
+		}
+
 		template <class T>
 		RE::TESObjectREFR* GetMapMarkerFromObject(RE::TESObjectREFR* a_refr)
 		{
@@ -365,7 +374,7 @@ namespace Event
 			static void thunk(RE::FastTravelConfirmCallback* a_this, std::uint8_t a_message)
 			{
 				if (a_message == static_cast<std::uint8_t>(1)) {
-					const auto refr = GetMapMarkerObject(a_this->mapMenu->mapMarker.get());
+					const auto refr = GetMapMarkerObject(GetMapMarkerHandle(*a_this->mapMenu).get());
 					GameEventHolder::GetSingleton()->fastTravelConfirmed.QueueEvent(refr);
 
 					const auto xMapMarker = refr ? refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
@@ -400,10 +409,11 @@ namespace Event
 				}
 
 				if (a_this->mapMenu && newDestination) {
-					a_this->mapMenu->mapMarker.reset();
-					a_this->mapMenu->mapMarker = RE::ObjectRefHandle(newDestination);
+					auto& mapMarker = GetMapMarkerHandle(*a_this->mapMenu);
+					mapMarker.reset();
+					mapMarker = RE::ObjectRefHandle(newDestination);
 
-					const auto refr = GetMapMarkerObject(a_this->mapMenu->mapMarker.get());
+					const auto refr = GetMapMarkerObject(mapMarker.get());
 					const auto xMapMarker = refr ? refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
 					const auto name = xMapMarker && xMapMarker->mapData ? xMapMarker->mapData->locationName.GetFullName() : "Unknown";
 					const auto formID = refr ? refr->GetFormID() : 0;
