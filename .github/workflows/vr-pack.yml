@@ -28,7 +28,7 @@ permissions:
 jobs:
   build:
     name: Build (CMake · vs2026 · Release)
-    # The vs2026-windows-vcpkg-vr preset needs the VS2026 generator; windows-2025 is the
+    # The vs2026-vr preset needs the VS2026 generator; windows-2025 is the
     # first hosted image to ship it.
     runs-on: windows-2025
     outputs:
@@ -71,8 +71,8 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           cmakeListsTxtPath: "${{ github.workspace }}/CMakeLists.txt"
-          configurePreset: vs2026-windows-vcpkg-vr
-          buildPreset: vs2026-windows-vcpkg-vr
+          configurePreset: vs2026-vr
+          buildPreset: vs2026-vr
 
       - name: Stage binaries
         shell: pwsh
