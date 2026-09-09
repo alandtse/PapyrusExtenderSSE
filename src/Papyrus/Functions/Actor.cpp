@@ -92,7 +92,7 @@ namespace Papyrus::Actor
 				continue;
 			}
 			const auto& [count, entry] = data;
-			if (count > 0 && entry->IsWorn()) {
+			if (count > 0 && entry && entry->IsWorn()) {
 				result.push_back(item);
 			}
 		}
@@ -517,7 +517,7 @@ namespace Papyrus::Actor
 		}
 		auto biped_slot = (a_slot - 30) >= 0 ? 1 << (a_slot - 30) : 0;
 		auto result = a_actor->GetWornArmor(static_cast<RE::BGSBipedObjectForm::BipedObjectSlot>(biped_slot));
-		logger::debug("GetEquippedArmor running on {} with slot {} returning biped_slot {} with {}", a_actor->GetDisplayFullName(), a_slot, biped_slot, result ? result->GetFullName() : "None");
+		REX::DEBUG("GetEquippedArmor running on {} with slot {} returning biped_slot {} with {}", a_actor->GetDisplayFullName(), a_slot, biped_slot, result ? result->GetFullName() : "None");
 		return result;
 	}
 
@@ -1099,7 +1099,7 @@ namespace Papyrus::Actor
 
 		for (auto& [item, data] : inv) {
 			const auto& [count, entry] = data;
-			if (!entry->IsQuestObject() && (!a_equippedOnly || entry->IsWorn())) {
+			if (count > 0 && entry && !entry->IsQuestObject() && (!a_equippedOnly || entry->IsWorn())) {
 				INV::remove_item(a_actor, item, count, true, nullptr, a_stackID, a_vm);
 			}
 		}
@@ -1297,7 +1297,7 @@ namespace Papyrus::Actor
 
 		for (const auto& [item, data] : inv) {
 			const auto& [count, entry] = data;
-			if (count > 0 && entry->IsWorn()) {
+			if (count > 0 && entry && entry->IsWorn()) {
 				RE::ActorEquipManager::GetSingleton()->UnequipObject(a_actor, item);
 			}
 		}
@@ -1337,7 +1337,7 @@ namespace Papyrus::Actor
 		BIND(GetEquippedAmmoEnchantment);
 #ifdef SKYRIMVR
 		a_vm.RegisterFunction("GetEquippedArmorInSlot"sv, "Actor", GetEquippedArmorInSlot);
-		logger::info("Patching missing Actor.GetEquippedArmorInSlot in VR");
+		REX::INFO("Patching missing Actor.GetEquippedArmorInSlot in VR");
 #endif
 		BIND(GetEquippedWeaponIsPoisoned);
 		BIND(GetEquippedWeaponPoison);
@@ -1377,6 +1377,6 @@ namespace Papyrus::Actor
 		BIND(SetSoulTrapped);
 		BIND(UnequipAllOfType);
 
-		logger::info("Registered {} actor functions"sv, count);
+		REX::INFO("Registered {} actor functions"sv, count);
 	}
 }

@@ -1,6 +1,6 @@
 #include "Papyrus/Functions/ObjectReference.h"
 
-#include "Papyrus/Util/Graphics.h"
+#include "Papyrus/Util/Graphics/Graphics.h"
 #include "Papyrus/Util/Inventory.h"
 #include "Serialization/Manager.h"
 
@@ -573,7 +573,7 @@ namespace Papyrus::ObjectReference
 			}
 
 			const auto it = std::ranges::find_if(map, [shortestDistance](const auto& mo) {
-				return numeric::approximately_equal(mo.second, shortestDistance);
+				return REX::FLT::APPROXIMATELY_EQUAL(mo.second, shortestDistance);
 			});
 			if (it != map.end()) {
 				return it->first;
@@ -857,7 +857,7 @@ namespace Papyrus::ObjectReference
 			}
 
 			if (!result.empty()) {
-				return result[clib_util::RNG().generate<std::size_t>(0, result.size() - 1)];
+				return result[REX::TRandom<std::size_t>().Generate(0, result.size() - 1)];
 			}
 		}
 
@@ -1050,6 +1050,7 @@ namespace Papyrus::ObjectReference
 		auto root = a_ref->Get3D();
 		if (!root) {
 			a_vm->TraceForm(a_ref, "has no 3D", a_stackID);
+			return false;
 		}
 
 		RE::NiAVObject* node = nullptr;
@@ -1189,7 +1190,7 @@ namespace Papyrus::ObjectReference
 			if (const auto actor = a_ref->As<RE::Actor>()) {
 				for (const auto& [item, data] : inv) {
 					const auto& [count, entry] = data;
-					if (count > 0 && entry->IsWorn()) {
+					if (count > 0 && entry && entry->IsWorn()) {
 						RE::ActorEquipManager::GetSingleton()->UnequipObject(actor, item);
 					}
 				}
@@ -1546,6 +1547,6 @@ namespace Papyrus::ObjectReference
 		BIND(StopAllShaders);
 		BIND(StopArtObject);
 
-		logger::info("Registered {} object reference functions"sv, count);
+		REX::INFO("Registered {} object reference functions"sv, count);
 	}
 }

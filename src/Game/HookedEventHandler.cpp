@@ -1,5 +1,4 @@
 #include "Game/HookedEventHandler.h"
-#include "Serialization/EventHolder.h"
 
 namespace Event
 {
@@ -21,10 +20,10 @@ namespace Event
 
 		void Install()
 		{
-			REL::Relocation<std::uintptr_t> bookMenu{ RELOCATION_ID(50122, 51053), OFFSET_3(0x22D, 0x231, 0x295) };
+			REL::Relocation<std::uintptr_t> bookMenu{ RELOCATION_ID(50122, 51053), OFFSET_VERSIONED(0x22D, 0x231, 0x268, 0x295) };
 			stl::write_thunk_call<Read>(bookMenu.address());
 
-			logger::info("Hooked Book Read"sv);
+			REX::INFO("Hooked Book Read"sv);
 		}
 	}
 
@@ -59,7 +58,7 @@ namespace Event
 			REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(33742, 34526), OFFSET(0x1E8, 0x20B) };
 			stl::write_thunk_call<MagicTargetApply>(target.address());
 
-			logger::info("Hooked Magic Effect Apply"sv);
+			REX::INFO("Hooked Magic Effect Apply"sv);
 		}
 	}
 
@@ -107,7 +106,7 @@ namespace Event
 				REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(37832, 38786), OFFSET(0x1C3, 0x29B) };
 				stl::write_thunk_call<SendHitEvent>(target.address());
 
-				logger::info("Hooked Magic Hit"sv);
+				REX::INFO("Hooked Magic Hit"sv);
 			}
 		}
 
@@ -187,7 +186,7 @@ namespace Event
 
 			namespace Static
 			{
-				REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(37674, 38628), OFFSET(0x6C7, 0x785) };
+				REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(37674, 38628), OFFSET_VERSIONED(0x6C7, 0x785, 0x79D, 0x6C7) };
 
 				struct SendHitEvent
 				{
@@ -287,36 +286,22 @@ namespace Event
 				stl::write_thunk_call<Static::SendHitEvent>(Static::target.address());
 				stl::hook_function_prologue<Projectile::SpawnCollisionEffects, OFFSET(6, 7)>(Projectile::target.address());
 
-				logger::info("Hooked Weapon Hit"sv);
+				REX::INFO("Hooked Weapon Hit"sv);
 			}
 		}
 	}
 
 	namespace FallLongDistance
 	{
-		struct CalcDoDamage
-		{
-			static float thunk(RE::Actor* a_this, float a_fallDistance, float a_defaultMult)
-			{
-				const auto fallDamage = func(a_this, a_fallDistance, a_defaultMult);
-				if (fallDamage > 0.0f) {
-					GameEventHolder::GetSingleton()->actorFallLongDistance.QueueEvent(a_this, a_fallDistance, fallDamage);
-				}
-				return fallDamage;
-			}
-
-			static inline REL::Relocation<decltype(thunk)> func;
-		};
-
 		void Install()
 		{
 			REL::Relocation<std::uintptr_t> take_ragdoll_damage{ RELOCATION_ID(36346, 37336), 0x35 };
-			stl::write_thunk_call<CalcDoDamage>(take_ragdoll_damage.address());
+			stl::write_thunk_call<CalcDoDamage<0>>(take_ragdoll_damage.address());
 
 			REL::Relocation<std::uintptr_t> process_movefinish_event{ RELOCATION_ID(36973, 37998), OFFSET(0xAE, 0xAB) };
-			stl::write_thunk_call<CalcDoDamage>(process_movefinish_event.address());
+			stl::write_thunk_call<CalcDoDamage<1>>(process_movefinish_event.address());
 
-			logger::info("Hooked Fall Damage"sv);
+			REX::INFO("Hooked Fall Damage"sv);
 		}
 	}
 
@@ -327,8 +312,8 @@ namespace Event
 		{
 			if (const auto marker = a_refr ? a_refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr) {
 				if (const auto mapData = marker->mapData) {
-					logger::debug("Found candidate map marker {} {}", mapData->locationName.GetFullName(), mapData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo));
-					logger::debug("Found mapmarker match for {} target {} {} ({:X})", typeid(T).name(), mapData->locationName.GetFullName(), mapData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo), a_refr->GetFormID());
+					REX::DEBUG("Found candidate map marker {} {}", mapData->locationName.GetFullName(), mapData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo));
+					REX::DEBUG("Found mapmarker match for {} target {} {} ({:X})", typeid(T).name(), mapData->locationName.GetFullName(), mapData->flags.any(RE::MapMarkerData::Flag::kCanTravelTo), a_refr->GetFormID());
 					return a_refr;
 				}
 			}
@@ -353,7 +338,7 @@ namespace Event
 			for (auto& mapMarker : mapMarkers) {
 				const auto refr = mapMarker.get().get();
 				const auto marker = refr ? refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
-				if (marker && marker->mapData && string::iequals(marker->mapData->locationName.GetFullName(), a_name)) {
+				if (marker && marker->mapData && REX::STR::IEQUALS(marker->mapData->locationName.GetFullName(), a_name)) {
 					return GetMapMarkerFromObject<const char*>(refr);
 				}
 			}
@@ -371,11 +356,11 @@ namespace Event
 					const auto xMapMarker = refr ? refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
 					const auto name = xMapMarker && xMapMarker->mapData ? xMapMarker->mapData->locationName.GetFullName() : "Unknown";
 					const auto formID = refr ? refr->GetFormID() : 0;
-					logger::debug("Found Fast Travel Confirmed target to {} ({:x})", name, formID);
+					REX::DEBUG("Found Fast Travel Confirmed target to {} ({:x})", name, formID);
 				}
 
 				if (disableFastTravel) {
-					logger::debug("Fast Travel is disabled; cancelling trip");
+					REX::DEBUG("Fast Travel is disabled; cancelling trip");
 
 					func(a_this, static_cast<std::uint8_t>(0));
 					RE::UIMessageQueue::GetSingleton()->AddMessage(RE::MapMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
@@ -384,16 +369,16 @@ namespace Event
 
 				const auto start = std::chrono::steady_clock::now();
 				if (!newDestination && defaultTimeout > 0.0f) {
-					logger::debug("Waiting for newDestination for {:.2f} seconds", defaultTimeout);
+					REX::DEBUG("Waiting for newDestination for {:.2f} seconds", defaultTimeout);
 				}
 				while (defaultTimeout > 0.0f) {
 					std::chrono::duration<float> elapsed_seconds = std::chrono::steady_clock::now() - start;
 					if (newDestination) {
-						logger::debug("newDestination received after {:.2f} seconds", elapsed_seconds.count());
+						REX::DEBUG("newDestination received after {:.2f} seconds", elapsed_seconds.count());
 						break;
 					}
 					if (elapsed_seconds.count() > defaultTimeout) {
-						logger::debug("newDestination not received after {:.2f} seconds; proceeding", elapsed_seconds.count());
+						REX::DEBUG("newDestination not received after {:.2f} seconds; proceeding", elapsed_seconds.count());
 						break;
 					}
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -407,7 +392,7 @@ namespace Event
 					const auto xMapMarker = refr ? refr->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
 					const auto name = xMapMarker && xMapMarker->mapData ? xMapMarker->mapData->locationName.GetFullName() : "Unknown";
 					const auto formID = refr ? refr->GetFormID() : 0;
-					logger::debug("Changed Fast Travel target to {} ({:X})", name, formID);
+					REX::DEBUG("Changed Fast Travel target to {} ({:X})", name, formID);
 				}
 
 				func(a_this, a_message);
@@ -428,7 +413,7 @@ namespace Event
 				if (a_target) {
 					const auto refr = GetMapMarkerObject(a_target);
 					const auto formID = refr ? refr->GetFormID() : 0;
-					logger::info("Found Fast Travel Prompt target to {} ({:X})", a_target, formID);
+					REX::INFO("Found Fast Travel Prompt target to {} ({:X})", a_target, formID);
 
 					ChangeFastTravelTarget::newDestination = nullptr;
 					GameEventHolder::GetSingleton()->fastTravelPrompt.QueueEvent(GetMapMarkerObject(a_target));
@@ -442,7 +427,7 @@ namespace Event
 		bool SetFastTravelDisabled(const bool a_disable)
 		{
 			if (ChangeFastTravelTarget::disableFastTravel != a_disable) {
-				logger::debug("Set Fast Travel Disabled {} -> {}", ChangeFastTravelTarget::disableFastTravel, a_disable);
+				REX::DEBUG("Set Fast Travel Disabled {} -> {}", ChangeFastTravelTarget::disableFastTravel, a_disable);
 				ChangeFastTravelTarget::disableFastTravel = a_disable;
 			}
 			return ChangeFastTravelTarget::disableFastTravel;
@@ -451,7 +436,7 @@ namespace Event
 		float SetFastTravelWaitTimeout(const float a_timeout)
 		{
 			if (ChangeFastTravelTarget::defaultTimeout != a_timeout) {
-				logger::debug("Set Fast Travel Wait Timeout {:.2f} -> {:.2f}", ChangeFastTravelTarget::defaultTimeout, a_timeout);
+				REX::DEBUG("Set Fast Travel Wait Timeout {:.2f} -> {:.2f}", ChangeFastTravelTarget::defaultTimeout, a_timeout);
 
 				ChangeFastTravelTarget::defaultTimeout = a_timeout;
 			}
@@ -465,10 +450,10 @@ namespace Event
 			if (const auto newDestination = ChangeFastTravelTarget::newDestination) {
 				if (const auto mapmarker = newDestination->extraList.GetByType<RE::ExtraMapMarker>(); mapmarker && mapmarker->mapData) {
 					const auto name = mapmarker->mapData->locationName.GetFullName();
-					logger::debug("Set new Fast Travel target {}", name);
+					REX::DEBUG("Set new Fast Travel target {}", name);
 				}
 			} else {
-				logger::debug("Cleared Fast Travel target");
+				REX::DEBUG("Cleared Fast Travel target");
 			}
 
 			return ChangeFastTravelTarget::newDestination != nullptr;
@@ -527,7 +512,7 @@ namespace Event
 			REL::Relocation<std::uintptr_t> map_click{ RELOCATION_ID(52208, 53095), OFFSET_3(0x342, 0x3A6, 0x3D9) };  // BSString::unknown has potential target as string as param 3
 			stl::write_thunk_call<GetFastTravelTarget>(map_click.address());
 
-			logger::info("Hooked Fast Travel Start"sv);
+			REX::INFO("Hooked Fast Travel Start"sv);
 
 #ifdef SKYRIMVR  // replicate Event OnPlayerFastTravelEnd(float afTravelGameTimeHours)
 
@@ -537,49 +522,28 @@ namespace Event
 			REL::Relocation<std::uintptr_t> calculateTravelTime{ REL::ID(39373), 0x29F };  // hook Calendar__FUN_1405a6230 to calculate travel time. SSE calculates around this function
 			stl::write_thunk_call<Calendar__Update>(calculateTravelTime.address());
 
-			logger::info("Hooked Fast Travel End for VR"sv);
+			REX::INFO("Hooked Fast Travel End for VR"sv);
 #endif
 		}
 	}
 
 	namespace ItemCrafted
 	{
-		struct StoryItemCraft
-		{
-			RE::ObjectRefHandle objectHandle;  // 00
-			RE::BGSLocation*    location;      // 08
-			RE::TESForm*        form;          // 10
-		};
-
-		static_assert(sizeof(StoryItemCraft) == 0x18);
-
-		struct StoryCraftItem
-		{
-			static StoryItemCraft* thunk(StoryItemCraft* a_event, RE::TESObjectREFR* a_refr, RE::BGSLocation* a_loc, RE::TESForm* a_form)
-			{
-				GameEventHolder::GetSingleton()->itemCrafted.QueueEvent(a_refr, a_loc, a_form);
-
-				return func(a_event, a_refr, a_loc, a_form);
-			}
-
-			static inline REL::Relocation<decltype(thunk)> func;
-		};
-
 		void Install()
 		{
 			REL::Relocation<std::uintptr_t> smithing{ RELOCATION_ID(50477, 51370), OFFSET(0x17D, 0x1B3) };
-			stl::write_thunk_call<StoryCraftItem>(smithing.address());
+			stl::write_thunk_call<StoryCraftItem<0>>(smithing.address());
 
 			REL::Relocation<std::uintptr_t> tempering{ RELOCATION_ID(50476, 51369), OFFSET(0x11E, 0x227) };
-			stl::write_thunk_call<StoryCraftItem>(tempering.address());
+			stl::write_thunk_call<StoryCraftItem<1>>(tempering.address());
 
 			REL::Relocation<std::uintptr_t> enchanting{ RELOCATION_ID(50450, 51355), OFFSET(0x2FC, 0x2FA) };
-			stl::write_thunk_call<StoryCraftItem>(enchanting.address());
+			stl::write_thunk_call<StoryCraftItem<2>>(enchanting.address());
 
 			REL::Relocation<std::uintptr_t> alchemy{ RELOCATION_ID(50449, 51354), OFFSET(0x29E, 0x296) };
-			stl::write_thunk_call<StoryCraftItem>(alchemy.address());
+			stl::write_thunk_call<StoryCraftItem<3>>(alchemy.address());
 
-			logger::info("Hooked Item Crafted"sv);
+			REX::INFO("Hooked Item Crafted"sv);
 		}
 	}
 
@@ -604,7 +568,7 @@ namespace Event
 			REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(15786, 16024) };
 			stl::hook_function_prologue<PoisonObject, 5>(target.address());
 
-			logger::info("Hooked Poison Object"sv);
+			REX::INFO("Hooked Poison Object"sv);
 		}
 	}
 
@@ -671,8 +635,8 @@ namespace Event
 			stl::write_vfunc<RE::ReanimateEffect, 0x14, Start>();
 			stl::write_vfunc<RE::ReanimateEffect, 0x15, Stop>();
 
-			logger::info("Hooked Actor Reanimate Start"sv);
-			logger::info("Hooked Actor Reanimate Stop"sv);
+			REX::INFO("Hooked Actor Reanimate Start"sv);
+			REX::INFO("Hooked Actor Reanimate Stop"sv);
 		}
 	}
 
@@ -700,7 +664,7 @@ namespace Event
 #endif
 				Resurrect>();
 
-			logger::info("Hooked Actor Resurrect"sv);
+			REX::INFO("Hooked Actor Resurrect"sv);
 		}
 	}
 
@@ -733,13 +697,13 @@ namespace Event
 			REL::Relocation<std::uintptr_t> target{ RELOCATION_ID(25684, 26231), OFFSET(0x44F, 0x46C) };
 			stl::write_thunk_call<SetCurrentWeather>(target.address());
 
-			logger::info("Hooked Weather Change"sv);
+			REX::INFO("Hooked Weather Change"sv);
 		}
 	}
 
 	void RegisterHookEvents()
 	{
-		logger::info("{:*^30}", "HOOKED EVENTS"sv);
+		REX::INFO("{:*^30}", "HOOKED EVENTS"sv);
 
 		BooksRead::Install();
 		FallLongDistance::Install();

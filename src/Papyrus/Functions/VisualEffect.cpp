@@ -29,7 +29,7 @@ namespace Papyrus::VisualEffect
 
 		if (const auto processLists = RE::ProcessLists::GetSingleton(); processLists) {
 			processLists->ForEachModelEffect([&](const RE::ModelReferenceEffect* a_modelEffect) {
-				if (a_modelEffect->artObject == art && !a_active || !a_modelEffect->finished) {
+				if (a_modelEffect->artObject == art && (!a_active || !a_modelEffect->finished)) {
 					count++;
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
@@ -61,6 +61,6 @@ namespace Papyrus::VisualEffect
 		BIND(GetArtObjectTotalCount);
 		BIND(SetArtObject);
 
-		logger::info("Registered {} visual effect functions"sv, count);
+		REX::INFO("Registered {} visual effect functions"sv, count);
 	}
 }

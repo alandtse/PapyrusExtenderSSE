@@ -48,6 +48,7 @@ namespace Papyrus::Quest
 	{
 		if (!a_quest) {
 			a_vm->TraceStack("Quest is None", a_stackID);
+			return;
 		}
 
 		for (const auto& objective : a_quest->objectives) {
@@ -66,6 +67,6 @@ namespace Papyrus::Quest
 		BIND(GetAllQuestStages);
 		BIND(SetObjectiveText);
 
-		logger::info("Registered {} quest functions"sv, count);
+		REX::INFO("Registered {} quest functions"sv, count);
 	}
 }

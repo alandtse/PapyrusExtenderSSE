@@ -1,7 +1,7 @@
 #include "Papyrus/Functions/Graphics.h"
 
-#include "Papyrus/Util/ActorGraphics.h"
-#include "Papyrus/Util/Graphics.h"
+#include "Papyrus/Util/Graphics/ActorGraphics.h"
+#include "Papyrus/Util/Graphics/Graphics.h"
 
 namespace Papyrus::Graphics
 {
@@ -786,6 +786,6 @@ namespace Papyrus::Graphics
 		BIND(ToggleHairWigs);
 		BIND(UpdateHitEffectArtNode);
 
-		logger::info("Registered {} graphic functions"sv, count);
+		REX::INFO("Registered {} graphic functions"sv, count);
 	}
 }

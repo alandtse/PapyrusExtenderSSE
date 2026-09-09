@@ -154,7 +154,7 @@ namespace Papyrus::Form::Functions
 			}
 		}
 
-		string::replace_all(descriptionStr, "\r"sv, ""sv);  //remove escape character not supported by BSFixedString
+		REX::STR::REPLACE_ALL(descriptionStr, "\r"sv, ""sv);  //remove escape character not supported by BSFixedString
 		return descriptionStr;
 	}
 
@@ -254,7 +254,7 @@ namespace Papyrus::Form::Functions
 				auto inv = player->GetInventory();
 				for (const auto& [item, data] : inv) {
 					const auto& [count, entry] = data;
-					if (count > 0 && item == a_form && !entry->IsFavorited()) {
+					if (count > 0 && item == a_form && entry && !entry->IsFavorited()) {
 						const auto extralist = entry->extraLists ? entry->extraLists->front() : nullptr;
 						invChanges->SetFavorite(entry.get(), extralist);
 						break;
@@ -458,7 +458,7 @@ namespace Papyrus::Form::Functions
 				auto inv = player->GetInventory();
 				for (const auto& [item, data] : inv) {
 					const auto& [count, entry] = data;
-					if (count > 0 && item == a_form) {
+					if (count > 0 && item == a_form && entry) {
 						if (const auto extralist = INV::get_hotkey_extralist(entry.get()); extralist) {
 							invChanges->RemoveFavorite(entry.get(), extralist);
 						}
@@ -498,6 +498,6 @@ namespace Papyrus::Form::Functions
 		BIND(SetRecordFlag);
 		BIND(UnmarkItemAsFavorite);
 
-		logger::info("Registered {} form functions"sv, count);
+		REX::INFO("Registered {} form functions"sv, count);
 	}
 }

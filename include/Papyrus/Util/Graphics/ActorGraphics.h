@@ -67,12 +67,12 @@ namespace GRAPHICS
 		private:
 			void SetShaderTypeImpl(RE::NiAVObject* a_object, RE::BSGeometry* a_templateGeo, std::vector<RE::BSFixedString>& results) const;
 
-			bool               noWeapons;
-			bool               noAlphaMeshes;
-			bool               isActor{};
-			std::int32_t       textureType{};
-			REX::Enum<Feature> feature{};
-			std::string        sourcePath{};
+			bool                noWeapons;
+			bool                noAlphaMeshes;
+			bool                isActor{};
+			std::int32_t        textureType{};
+			REX::TEnum<Feature> feature{};
+			std::string         sourcePath{};
 		};
 
 		struct Output
@@ -83,7 +83,7 @@ namespace GRAPHICS
 			bool Reset(RE::BSGeometry* a_geometry, RE::BSLightingShaderProperty* a_shaderProp, RE::BSLightingShaderMaterialBase* a_material) const;
 
 			RE::BSShaderTextureSet* textureSet;
-			REX::Enum<Feature>      feature;
+			REX::TEnum<Feature>     feature;
 			std::uint64_t           flags;
 			RE::NiColor             emissiveColor;
 			float                   emissiveMult;

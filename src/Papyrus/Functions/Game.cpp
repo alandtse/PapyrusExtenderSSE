@@ -1,6 +1,6 @@
 #include "Papyrus/Functions/Game.h"
 
-#include "Papyrus/Util/Graphics.h"
+#include "Papyrus/Util/Graphics/Graphics.h"
 
 namespace Papyrus::Game
 {
@@ -89,6 +89,22 @@ namespace Papyrus::Game
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
+		}
+
+		return result;
+	}
+
+	std::vector<std::string> GetActivePlugins(RE::StaticFunctionTag*)
+	{
+		std::vector<std::string> result;
+
+		if (auto dataHandler = RE::TESDataHandler::GetSingleton()) {
+			result.reserve(dataHandler->files.size());
+			for (const auto& file : dataHandler->files) {
+				if (file && file->compileIndex != 0xFF) {
+					result.emplace_back(file->GetFilename());
+				}
+			}
 		}
 
 		return result;
@@ -430,6 +446,7 @@ namespace Papyrus::Game
 		BIND(FindAllReferencesOfFormType);
 		BIND(FindAllReferencesOfType);
 		BIND(FindAllReferencesWithKeyword);
+		BIND(GetActivePlugins);
 		BIND(GetActorsByProcessingLevel);
 		BIND(GetAllEnchantments);
 		BIND(GetAllForms);
@@ -454,6 +471,6 @@ namespace Papyrus::Game
 		BIND(SetLocalGravity);
 		BIND(UpdateCrosshairs);
 
-		logger::info("Registered {} game functions"sv, count);
+		REX::INFO("Registered {} game functions"sv, count);
 	}
 }
