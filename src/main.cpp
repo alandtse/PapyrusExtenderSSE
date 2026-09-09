@@ -93,7 +93,7 @@ SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* a_skse)
 #else
 						   .trampolineSize = 264
 #endif
-	} );
+					   });
 
 	Runtime::version = a_skse->RuntimeVersion();
 
