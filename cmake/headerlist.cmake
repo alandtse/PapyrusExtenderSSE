@@ -4,6 +4,7 @@ set(headers ${headers}
 	include/API/DismemberingFrameworkAPI.h
 	include/API/NextGenDecapitationsAPI.h
 	include/Common.h
+	include/Compat/REXStringVR.h
 	include/Game/EventHandler.h
 	include/Game/HookedEventHandler.h
 	include/Game/Manager.h

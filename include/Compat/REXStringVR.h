@@ -8,7 +8,7 @@
 // SE/AE gets from commonlib-shared.
 #ifdef SKYRIMVR
 
-#include <random>
+#	include <random>
 
 namespace REX::STR
 {
@@ -178,6 +178,7 @@ namespace REX
 		{}
 
 		static constexpr T min() { return std::numeric_limits<T>::min(); }
+
 		static constexpr T max() { return std::numeric_limits<T>::max(); }
 
 		T Generate(T a_min = min(), T a_max = max())
@@ -246,11 +247,15 @@ namespace REX
 		[[nodiscard]] explicit constexpr operator bool() const noexcept { return _impl != static_cast<U>(0); }
 
 		[[nodiscard]] constexpr E operator*() const noexcept { return get(); }
+
 		[[nodiscard]] constexpr E get() const noexcept { return static_cast<E>(_impl); }
+
 		[[nodiscard]] constexpr U underlying() const noexcept { return _impl; }
 
 		friend constexpr bool operator==(TEnum a_lhs, TEnum a_rhs) noexcept { return a_lhs.underlying() == a_rhs.underlying(); }
+
 		friend constexpr bool operator==(TEnum a_lhs, E a_rhs) noexcept { return a_lhs.underlying() == static_cast<U>(a_rhs); }
+
 		friend constexpr bool operator==(E a_lhs, TEnum a_rhs) noexcept { return static_cast<U>(a_lhs) == a_rhs.underlying(); }
 
 	private:
@@ -287,31 +292,31 @@ namespace REX::Impl
 // sentinel specialization for the plain-string, no-args overload, plus explicit deduction
 // guides for both) since MSVC's implicit CTAD from the constructor alone did not reliably
 // resolve the multi-arg calls used throughout this codebase.
-#define PO3_VR_REX_LOG_LEVEL(name, level)                                                                 \
-	namespace REX                                                                                         \
-	{                                                                                                      \
-		template <class... T>                                                                             \
-		struct name                                                                                       \
-		{                                                                                                  \
-			name() = delete;                                                                              \
-			explicit name(const std::format_string<T...> a_fmt, T&&... a_args)                            \
-			{                                                                                              \
-				Impl::Log(level, a_fmt, std::forward<T>(a_args)...);                                      \
-			}                                                                                              \
-		};                                                                                                 \
-		template <>                                                                                       \
-		struct name<void>                                                                                 \
-		{                                                                                                  \
-			name() = delete;                                                                              \
-			explicit name(std::string_view a_fmt)                                                         \
-			{                                                                                              \
-				Impl::Log(level, a_fmt);                                                                  \
-			}                                                                                              \
-		};                                                                                                 \
-		template <class... T>                                                                             \
-		name(const std::format_string<T...>&, T&&...)->name<T...>;                                        \
-		name(std::string_view)->name<void>;                                                               \
-	}
+#	define PO3_VR_REX_LOG_LEVEL(name, level)                                      \
+		namespace REX                                                              \
+		{                                                                          \
+			template <class... T>                                                  \
+			struct name                                                            \
+			{                                                                      \
+				name() = delete;                                                   \
+				explicit name(const std::format_string<T...> a_fmt, T&&... a_args) \
+				{                                                                  \
+					Impl::Log(level, a_fmt, std::forward<T>(a_args)...);           \
+				}                                                                  \
+			};                                                                     \
+			template <>                                                            \
+			struct name<void>                                                      \
+			{                                                                      \
+				name() = delete;                                                   \
+				explicit name(std::string_view a_fmt)                              \
+				{                                                                  \
+					Impl::Log(level, a_fmt);                                       \
+				}                                                                  \
+			};                                                                     \
+			template <class... T>                                                  \
+			name(const std::format_string<T...>&, T&&...) -> name<T...>;           \
+			name(std::string_view) -> name<void>;                                  \
+		}
 
 PO3_VR_REX_LOG_LEVEL(TRACE, spdlog::level::trace)
 PO3_VR_REX_LOG_LEVEL(DEBUG, spdlog::level::debug)
@@ -320,7 +325,7 @@ PO3_VR_REX_LOG_LEVEL(WARN, spdlog::level::warn)
 PO3_VR_REX_LOG_LEVEL(ERROR, spdlog::level::err)
 PO3_VR_REX_LOG_LEVEL(CRITICAL, spdlog::level::critical)
 
-#undef PO3_VR_REX_LOG_LEVEL
+#	undef PO3_VR_REX_LOG_LEVEL
 
 namespace REX
 {
