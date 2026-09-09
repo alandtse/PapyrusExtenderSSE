@@ -50,6 +50,8 @@
 #include "REX/REX.h"
 #include "SKSE/SKSE.h"
 
+// NONLS above strips winnls.h, which boost::regex's win32 traits need; skip that backend entirely.
+#define BOOST_REGEX_NO_W32
 #include <boost/regex.hpp>
 #include <boost/unordered/unordered_flat_map.hpp>
 #include <boost/unordered/unordered_flat_set.hpp>
@@ -61,6 +63,8 @@
 
 #include <ClibUtil/distribution.hpp>
 #include <ClibUtil/editorID.hpp>
+
+#include "Compat/REXStringVR.h"
 
 #define DLLEXPORT __declspec(dllexport)
 
@@ -123,7 +127,11 @@ namespace stl
 	template <class T>
 	void write_thunk_call(std::uintptr_t a_src)
 	{
+#ifdef SKYRIMVR
+		auto& trampoline = SKSE::GetTrampoline();
+#else
 		auto& trampoline = REL::GetTrampoline();
+#endif
 		T::func = trampoline.write_call<5>(a_src, T::thunk);
 	}
 
@@ -154,8 +162,13 @@ namespace stl
 		Patch p(a_src, BYTES);
 		p.ready();
 
+#ifdef SKYRIMVR
+		auto& trampoline = SKSE::GetTrampoline();
+		trampoline.write_branch<5>(a_src, T::thunk);
+#else
 		auto& trampoline = REL::GetTrampoline();
 		trampoline.write_jmp<5>(a_src, T::thunk);
+#endif
 
 		auto alloc = trampoline.allocate(p.getSize());
 		std::memcpy(alloc, p.getCode(), p.getSize());
@@ -190,11 +203,13 @@ namespace Runtime
 
 	inline REL::Version version{};
 
+#ifdef SKYRIM_AE
 	[[nodiscard]] inline bool IsAtLeast1_7_99() noexcept
 	{
 		static bool result = REX::FModule::GetExecutingModule().GetFileVersion() >= Runtime::SSE_1_7_99;
 		return result;
 	}
+#endif
 }
 
 #ifdef SKYRIM_AE
